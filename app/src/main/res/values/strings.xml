@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">CalendarProject</string>
+    <string name="calendar_activity_name">Calendar</string>
+    <string name="previous_month">Back</string>
+    <string name="next_month">Next</string>
+    <string name="sign_out">Sign Out</string>
+</resources>
