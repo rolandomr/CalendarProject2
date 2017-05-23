@@ -66,28 +66,32 @@
     <RadioGroup
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:checkedButton="@+id/morning">
 
         <RadioButton
             android:id="@+id/morning"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:onClick="onRadioButtonClicked"
             android:text="Morning"
-            android:onClick="onRadioButtonClicked" />
+            android:textColor="@color/buttonColorPressed" />
 
         <RadioButton
             android:id="@+id/afternoon"
-            android:text="Afternoon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="onRadioButtonClicked" />
+            android:onClick="onRadioButtonClicked"
+            android:text="Afternoon"
+            android:textColor="@android:color/holo_blue_bright" />
 
         <RadioButton
             android:id="@+id/night"
             android:layout_width="wrap_content"
-            android:text="Night"
             android:layout_height="wrap_content"
-            android:onClick="onRadioButtonClicked" />
+            android:onClick="onRadioButtonClicked"
+            android:text="Night"
+            android:textColor="@android:color/holo_green_light" />
     </RadioGroup>
 
 

@@ -22,6 +22,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
@@ -111,12 +112,17 @@ public class CalendarActivity extends AppCompatActivity {
         okButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Worker currentWorker = new Worker(mUserName,mUserID,makeListOfDatesLong(workingDays));
-                //mDatabaseReference.push().setValue(currentWorker);
-                //mDatabaseReference.child(mUserID).setValue(currentWorker);
-                mDatabaseReference.setValue(currentWorker);
-                Toast.makeText(getApplicationContext(),"Days added to the database", Toast.LENGTH_SHORT).show();
-                //we are gonna write workingDaysworkingDays to the database
+                //when OK is clicked and before saving it to the database, i have to check
+                //that the propper restrictions apply, that is number of hours per week, per year,...
+                List<Long> listOfWorkingDays = makeListOfDatesLong(workingDays);
+                if (checkHoursRestrictions(listOfWorkingDays)) {
+                    Worker currentWorker = new Worker(mUserName,mUserID,listOfWorkingDays);
+                    //mDatabaseReference.push().setValue(currentWorker);
+                    //mDatabaseReference.child(mUserID).setValue(currentWorker);
+                    mDatabaseReference.setValue(currentWorker);
+                    Toast.makeText(getApplicationContext(),"Days added to the database", Toast.LENGTH_SHORT).show();
+                    //we are gonna write workingDaysworkingDays to the database
+                }
             }
         });
 
@@ -235,6 +241,39 @@ public class CalendarActivity extends AppCompatActivity {
         drawMonth(workingDays);//problably will need to add to workingDays the dates read from the database
     }
 
+    private boolean checkHoursRestrictions(List<Long> daysworked) {
+        //40 hours per week
+        //no more than 8 nights per month
+        boolean isOk = true;
+        if (daysworked.size() >= 225) {
+            //this worker has
+            Toast.makeText(getApplicationContext(),mUserName + " has more than 225 work shifts", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(),mUserName + " has more than 225 work shifts", Toast.LENGTH_SHORT).show();
+            isOk = false;
+        }
+        Collections.sort(daysworked);
+        int shiftsInTheSameWeek = 0;
+        int pivotWeek = -1;
+        int weekNumber = -1;
+        for (Long day : daysworked) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(day);
+            weekNumber = cal.get(Calendar.WEEK_OF_YEAR);
+            shiftsInTheSameWeek++;
+            if (pivotWeek == weekNumber){
+                if (shiftsInTheSameWeek>5) {
+                    Toast.makeText(getApplicationContext(),mUserName + " has more than 40 hours in week"+weekNumber, Toast.LENGTH_SHORT).show();
+                    isOk = false;
+                    break;//
+                }
+                pivotWeek = weekNumber;
+            } else{
+                shiftsInTheSameWeek = 1;
+                pivotWeek = weekNumber;
+            }
+        }
+        return isOk;
+    }
 
 
     //just turns the HashSet<Calendar> into List<String> to be able to store it in the database
@@ -368,6 +407,7 @@ public class CalendarActivity extends AppCompatActivity {
 
     public void onRadioButtonClicked(View view) {
         // Is the button now checked?
+
         boolean checked = ((RadioButton) view).isChecked();
 
         // Check which radio button was clicked

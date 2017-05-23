@@ -24,6 +24,7 @@ import java.util.List;
 public class CalendarAdapter extends ArrayAdapter<Calendar> {
 
     private HashSet<Calendar> workDays;
+    //what if another set is added for holidays
 
     public CalendarAdapter(@NonNull Context context, @LayoutRes int resource) {
         super(context, resource);
