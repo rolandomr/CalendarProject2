@@ -45,9 +45,11 @@ public class CalendarActivity extends AppCompatActivity {
     private static final int NIGHT_SHIFT = 23;
     //current displayed month, global variable
     private Calendar currentCalendar = Calendar.getInstance();
+    private boolean isAdmin;
 
     //the list of dates that the worker has to work
     private HashSet<Calendar> workingDays = new HashSet<Calendar>();
+    private HashSet<Calendar> holidays = new HashSet<Calendar>();
     private int hourOfDay;
     private FirebaseDatabase mFirebaseDatabase;
     //references a specific part of the database
@@ -58,7 +60,7 @@ public class CalendarActivity extends AppCompatActivity {
     private ChildEventListener mChildEventListener;
     //declare it now, assign value later
     private TextView monthName;
-    private  TextView currentYear;
+    private TextView currentYear;
     //int month = currentCalendar.get(Calendar.MONTH);
     //int year = currentCalendar.get(Calendar.YEAR);
     int day = currentCalendar.get(Calendar.DAY_OF_MONTH);
@@ -80,6 +82,7 @@ public class CalendarActivity extends AppCompatActivity {
         mFirebaseDatabase = FirebaseDatabase.getInstance();
 
         workingDays = null;//reset on user changes
+
         hourOfDay = 7; //by default works in morning, 15 is afternoon and 23 is night
 
         if (savedInstanceState == null) {
@@ -90,10 +93,12 @@ public class CalendarActivity extends AppCompatActivity {
             } else {
                 mUserName = extras.getString("name");
                 mUserID = extras.getString("userID");
+                isAdmin = extras.getBoolean("admin");
             }
         } else {
-            mUserName= (String) savedInstanceState.getSerializable("name");
-            mUserID= (String) savedInstanceState.getSerializable("userID");
+            mUserName = (String) savedInstanceState.getSerializable("name");
+            mUserID = (String) savedInstanceState.getSerializable("userID");
+            isAdmin = (boolean) savedInstanceState.getBoolean("admin");
         }
 
         //mDatabaseReference = mFirebaseDatabase.getReference().child("workers");
@@ -107,22 +112,52 @@ public class CalendarActivity extends AppCompatActivity {
                 android.R.layout.simple_list_item_1, daysNames);
         daysOfWeek.setAdapter(adapter2);
 
-        Button okButton = (Button) findViewById(R.id.ok_button);
-
+        final Button okButton = (Button) findViewById(R.id.ok_button);
+        if (isAdmin){
+            okButton.setText("OK");
+        } else {
+            okButton.setText("REQUEST HOLIDAY");
+        }
         okButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //when OK is clicked and before saving it to the database, i have to check
                 //that the propper restrictions apply, that is number of hours per week, per year,...
-                List<Long> listOfWorkingDays = makeListOfDatesLong(workingDays);
-                if (checkHoursRestrictions(listOfWorkingDays)) {
-                    Worker currentWorker = new Worker(mUserName,mUserID,listOfWorkingDays);
-                    //mDatabaseReference.push().setValue(currentWorker);
-                    //mDatabaseReference.child(mUserID).setValue(currentWorker);
-                    mDatabaseReference.setValue(currentWorker);
-                    Toast.makeText(getApplicationContext(),"Days added to the database", Toast.LENGTH_SHORT).show();
-                    //we are gonna write workingDaysworkingDays to the database
+                if (isAdmin) {
+                    if (workingDays.size() == 0) {
+                        Toast.makeText(getApplicationContext(), "No days have been selected", Toast.LENGTH_SHORT).show();
+                    } else {
+                        List<Long> listOfWorkingDays = makeListOfDatesLong(workingDays);
+                        List<Long> listOfHolidays = makeListOfDatesLong(holidays);
+
+                        if (checkHoursRestrictions(listOfWorkingDays)) {
+                            //Worker currentWorker = new Worker(mUserName, mUserID, listOfWorkingDays);
+                            Worker currentWorker = new Worker(mUserName, mUserID, listOfWorkingDays, listOfHolidays);
+                            //mDatabaseReference.push().setValue(currentWorker);
+                            //mDatabaseReference.child(mUserID).setValue(currentWorker);
+                            mDatabaseReference.setValue(currentWorker);
+                            Toast.makeText(getApplicationContext(), "Days added to the database", Toast.LENGTH_SHORT).show();
+                            //we are gonna write workingDaysworkingDays to the database
+                        }
+                    }
+                } else {
+                    if (holidays.size() == 0) {
+                        Toast.makeText(getApplicationContext(), "No days have been selected", Toast.LENGTH_SHORT).show();
+                    } else {
+                        List<Long> listOfHolidays = makeListOfDatesLong(holidays);
+                        List<Long> listOfWorkingDays = new ArrayList<Long>();
+                        if (workingDays != null) {
+                            listOfWorkingDays = makeListOfDatesLong(workingDays);
+                        }
+                        //Worker currentWorker = new Worker(mUserName, mUserID, listOfHolidays);
+                        Worker currentWorker = new Worker(mUserName, mUserID, listOfWorkingDays, listOfHolidays);
+                        //maybe should just add it to the holidays node
+                        mDatabaseReference.setValue(currentWorker);
+                        Toast.makeText(getApplicationContext(), "Days added to the database", Toast.LENGTH_SHORT).show();
+                    }
                 }
+
+
             }
         });
 
@@ -143,8 +178,9 @@ public class CalendarActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //add a month to the current calendar
-                currentCalendar.add(Calendar.MONTH,1);
-                drawMonth(workingDays);
+                currentCalendar.add(Calendar.MONTH, 1);
+                //drawMonth(workingDays);
+                drawMonth(workingDays, holidays);
             }
         });
 
@@ -154,12 +190,13 @@ public class CalendarActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //add a month to the current calendar
-                currentCalendar.add(Calendar.MONTH,-1);
-                drawMonth(workingDays);
+                currentCalendar.add(Calendar.MONTH, -1);
+                drawMonth(workingDays, holidays);
+
             }
         });
 
-
+//Have to differenciate between admin choosing shifts and worker choosing holidays
         calendarGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v,
                                     int position, long id) {
@@ -167,41 +204,65 @@ public class CalendarActivity extends AppCompatActivity {
                 TextView day_tv = (TextView) v;
                 String goodDate = (String) day_tv.getText();
                 int theDay = Integer.parseInt(goodDate);
-
-                Calendar date = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
+                //Don't allow to change shifts today or before today
+                Calendar datecuen = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
                         , currentCalendar.get(Calendar.MONTH), theDay, hourOfDay, 0);
-
-                Calendar dateMorning = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
-                        , currentCalendar.get(Calendar.MONTH), theDay, 7, 0);
-
-                Calendar dateAfternoon = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
-                        , currentCalendar.get(Calendar.MONTH), theDay, 15, 0);
-
-                Calendar dateNight = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
-                        , currentCalendar.get(Calendar.MONTH), theDay, 23, 0);
-
-                //Morning, Afternoon and Night i can also add a time to Calendar date depending
-                //And in the adapter check which one it is to paint it accordingly
-                if ((position < 7 && theDay > 24) || (position > 27 && theDay < 15)) {
-                    Toast.makeText(getApplicationContext(),"Change month to pick this date", Toast.LENGTH_SHORT).show();
-                } else {//i could add/remove here from the database, or after the OK button, more logical
-                    if (workingDays.contains(date)) {//if was previusly selected, deselect
-                        workingDays.remove(date);
-                    } else if (workingDays.contains(dateMorning)){
-                        workingDays.remove(dateMorning);
-                        workingDays.add(date);
-                    } else if (workingDays.contains(dateAfternoon)) {
-                        workingDays.remove(dateAfternoon);
-                        workingDays.add(date);
-                    } else if (workingDays.contains(dateNight)) {
-                        workingDays.remove(dateNight);
-                        workingDays.add(date);
-                    } else {
-                        workingDays.add(date);
+                if (datecuen.get(Calendar.DAY_OF_YEAR) <= Calendar.getInstance().get(Calendar.DAY_OF_YEAR)) {
+                    Toast.makeText(getApplicationContext(), "Cannot set shifts before today", Toast.LENGTH_SHORT).show();
+                } else {
+                    if (isAdmin) {
+                        Calendar date = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
+                                , currentCalendar.get(Calendar.MONTH), theDay, hourOfDay, 0);
+                        Calendar dateMorning = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
+                                , currentCalendar.get(Calendar.MONTH), theDay, 7, 0);
+                        Calendar dateAfternoon = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
+                                , currentCalendar.get(Calendar.MONTH), theDay, 15, 0);
+                        Calendar dateNight = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
+                                , currentCalendar.get(Calendar.MONTH), theDay, 23, 0);
+                        //Morning, Afternoon and Night i can also add a time to Calendar date depending
+                        //And in the adapter check which one it is to paint it accordingly
+                        if (workingDays != null) {//CAREFULL WITH THIS BECAUSE THE ADMINISTRATOR HAS TO BE ABLE TO SET THE DATES
+                            if ((position < 7 && theDay > 24) || (position > 27 && theDay < 15)) {
+                                Toast.makeText(getApplicationContext(), "Change month to pick this date", Toast.LENGTH_SHORT).show();
+                            } else {//i could add/remove here from the database, or after the OK button, more logical
+                                if (workingDays.contains(date)) {//if was previusly selected, deselect
+                                    workingDays.remove(date);
+                                } else if (workingDays.contains(dateMorning)) {
+                                    workingDays.remove(dateMorning);
+                                    workingDays.add(date);
+                                } else if (workingDays.contains(dateAfternoon)) {
+                                    workingDays.remove(dateAfternoon);
+                                    workingDays.add(date);
+                                } else if (workingDays.contains(dateNight)) {
+                                    workingDays.remove(dateNight);
+                                    workingDays.add(date);
+                                } else {
+                                    workingDays.add(date);
+                                }
+                                drawMonth(workingDays, holidays);
+                                //drawMonth(workingDays);
+                            }
+                        } //else workingDays.add(date);I ADDED THIS WHEN IT DIDN'T WORK WITH EWA and added above the if working!=null
+                    } else {//is the user
+                        Calendar date = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
+                                , currentCalendar.get(Calendar.MONTH), theDay, hourOfDay, 0);
+                        if (holidays != null) {//CAREFULL WITH THIS BECAUSE THE ADMINISTRATOR HAS TO BE ABLE TO SET THE DATES
+                            if ((position < 7 && theDay > 24) || (position > 27 && theDay < 15)) {
+                                Toast.makeText(getApplicationContext(), "Change month to pick this date", Toast.LENGTH_SHORT).show();
+                            } else {//i could add/remove here from the database, or after the OK button, more logical
+                                if (holidays.contains(date)) {//if was previusly selected, deselect
+                                    holidays.remove(date);
+                                } else {
+                                    holidays.add(date);
+                                }
+                                drawMonth(workingDays, holidays);
+                                //drawMonth(workingDays);
+                            }
+                        } //else workingDays.add(date);I ADDED THIS WHEN IT DIDN'T WORK WITH EWA and added above the if working!=null
                     }
-                    drawMonth(workingDays);
-                }
 
+
+                }
             }
         });
         mChildEventListener = new ChildEventListener() {
@@ -216,29 +277,39 @@ public class CalendarActivity extends AppCompatActivity {
                 if (worker != null) {
                     if (worker.getNumber_id().equals(mUserID)) {
                         List<Long> longList = worker.getWorkInts();
-
+                        List<Long> longListHolidays = worker.getHolidays();
                         workingDays = ConvertHashToList(longList);
+                        holidays = ConvertHashToList(longListHolidays);
                     }
                 }
-                drawMonth(workingDays);//here i should have the daya from the database
+                drawMonth(workingDays,holidays);//here i should have the daya from the database
+                //drawMonth(workingDays);//here i should have the daya from the database
+
             }
+
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
             }
+
             @Override
             public void onChildRemoved(DataSnapshot dataSnapshot) {
             }
+
             @Override
             public void onChildMoved(DataSnapshot dataSnapshot, String s) {
             }
+
             @Override
             public void onCancelled(DatabaseError databaseError) {//normally means you don't have permission to read the data
+                Toast.makeText(getApplicationContext(), "onCancelled in Calendar Activity", Toast.LENGTH_LONG).show();
             }
         };
         //mDatabaseReference.addChildEventListener(mChildEventListener);
         mDatabaseReferenceWorkers.addChildEventListener(mChildEventListener);
 
-        drawMonth(workingDays);//problably will need to add to workingDays the dates read from the database
+        drawMonth(workingDays, holidays);//problably will need to add to workingDays the dates read from the database
+        //drawMonth(workingDays);//problably will need to add to workingDays the dates read from the database
+
     }
 
     private boolean checkHoursRestrictions(List<Long> daysworked) {
@@ -247,8 +318,8 @@ public class CalendarActivity extends AppCompatActivity {
         boolean isOk = true;
         if (daysworked.size() >= 225) {
             //this worker has
-            Toast.makeText(getApplicationContext(),mUserName + " has more than 225 work shifts", Toast.LENGTH_SHORT).show();
-            Toast.makeText(getApplicationContext(),mUserName + " has more than 225 work shifts", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), mUserName + " has more than 225 work shifts", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), mUserName + " has more than 225 work shifts", Toast.LENGTH_SHORT).show();
             isOk = false;
         }
         Collections.sort(daysworked);
@@ -260,14 +331,14 @@ public class CalendarActivity extends AppCompatActivity {
             cal.setTimeInMillis(day);
             weekNumber = cal.get(Calendar.WEEK_OF_YEAR);
             shiftsInTheSameWeek++;
-            if (pivotWeek == weekNumber){
-                if (shiftsInTheSameWeek>5) {
-                    Toast.makeText(getApplicationContext(),mUserName + " has more than 40 hours in week"+weekNumber, Toast.LENGTH_SHORT).show();
+            if (pivotWeek == weekNumber) {
+                if (shiftsInTheSameWeek > 5) {
+                    Toast.makeText(getApplicationContext(), mUserName + " has more than 40 hours in week" + weekNumber, Toast.LENGTH_SHORT).show();
                     isOk = false;
                     break;//
                 }
                 pivotWeek = weekNumber;
-            } else{
+            } else {
                 shiftsInTheSameWeek = 1;
                 pivotWeek = weekNumber;
             }
@@ -281,7 +352,7 @@ public class CalendarActivity extends AppCompatActivity {
         //SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/YYYY");
         SimpleDateFormat sdf = new SimpleDateFormat();
         List<String> days = new ArrayList<>();
-        for(Calendar date : workDays) {
+        for (Calendar date : workDays) {
             //SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/YYYY");
             days.add(sdf.format(date.getTime()));
         }
@@ -293,10 +364,12 @@ public class CalendarActivity extends AppCompatActivity {
         //SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/YYYY");
         //SimpleDateFormat sdf = new SimpleDateFormat();
         List<Long> days = new ArrayList<>();
-        for(Calendar date : workDays) {
+        if (workDays!= null) {
+        for (Calendar date : workDays) {
             //SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/YYYY");
             //days.add(sdf.format(date.getTime()));
             days.add(date.getTimeInMillis());
+        }
         }
         return days;
     }
@@ -306,7 +379,7 @@ public class CalendarActivity extends AppCompatActivity {
         HashSet<Calendar> dates = new HashSet<Calendar>();
         //Calendar cal = Calendar.getInstance();
         //Calendar cal = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
-          //      , currentCalendar.get(Calendar.MONTH), currentCalendar.get(Calendar.DAY_OF_MONTH));
+        //      , currentCalendar.get(Calendar.MONTH), currentCalendar.get(Calendar.DAY_OF_MONTH));
         for (Long date : datesinDB) {
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(date);
@@ -318,10 +391,11 @@ public class CalendarActivity extends AppCompatActivity {
 
 
     private void drawMonth() {
-        drawMonth(null);
+        drawMonth(null, null);
     }
+
     //private String[] drawMonth(int year, int month) {
-    private void drawMonth(HashSet<Calendar> workDays) {
+    private void drawMonth(HashSet<Calendar> workDays, HashSet<Calendar> holidays) {
         //private void drawMonth(GridView calendar_grid) {
 
         ArrayList<Calendar> days = new ArrayList<>();
@@ -349,7 +423,8 @@ public class CalendarActivity extends AppCompatActivity {
         currentYear.setText(theYear.toString());
 
 
-        CalendarAdapter adapter = new CalendarAdapter(this, days, workDays);
+        //CalendarAdapter adapter = new CalendarAdapter(this, days, workDays);
+        CalendarAdapter adapter = new CalendarAdapter(this, days, workDays, holidays);
 
         calendarGrid.setAdapter(adapter);
 
@@ -358,9 +433,9 @@ public class CalendarActivity extends AppCompatActivity {
 
     //need to fix this method, this is too ugly, list of months could be better,
     //even using the strings.xml in values should be better to allow different languages
-    public String getMonthName(int monthNumber){
+    public String getMonthName(int monthNumber) {
         String month = "";
-        switch (monthNumber){
+        switch (monthNumber) {
             case 0:
                 month = "January";
                 break;
@@ -411,19 +486,19 @@ public class CalendarActivity extends AppCompatActivity {
         boolean checked = ((RadioButton) view).isChecked();
 
         // Check which radio button was clicked
-        switch(view.getId()) {
+        switch (view.getId()) {
             case R.id.morning:
                 if (checked)
                     hourOfDay = 7;
-                    break;
+                break;
             case R.id.afternoon:
                 if (checked)
                     hourOfDay = 15;
-                    break;
+                break;
             case R.id.night:
-                if(checked)
+                if (checked)
                     hourOfDay = 23;
-                    break;
+                break;
         }
     }
 

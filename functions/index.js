@@ -49,50 +49,91 @@ exports.addWelcomeMessages = functions.auth.user().onCreate((event) => {
 exports.createFullCalendar = functions.database
     .ref('workers/{worker_id}/workInts')
     .onWrite(event => {
-      //const post = event.data.val();
-      //const previousData = event.data.previous.val();
-      
-      //overriding the previous data in the object
-      //post.tittle = sanitize(post.tittle)
-      //finally write the post back to the location where it came from
-      //event.data.ref.set(post)
-      //const workingdays = post.workInts;//this is already a list, not a JSON   
-      //const workingdaysPrevious = previousData.workInts;
-      //console.log("Before we had this " + workingdaysPrevious);
-      //console.log("Now we have this " + workingdays);
-      //var currentList = [];
-      //var previousList = [];
-      //console.log(post);
-      //convert to LIST
-      /*for (var key in workingdays) {
-        if (workingdays.hasOwnProperty(key)) {
-          //console.log(key + " -> " + workingdays[key]);
-          currentList.push(workingdays[key]);
-          //console.log("Current list in for loop "+currentList);
-        } 
-      }
-      for (var key in workingdaysPrevious) {
-        if (workingdays.hasOwnProperty(key)) {
-          //console.log(key + " -> " + workingdays[key]);
-          previousList.push(workingdaysPrevious[key]);
-          //console.log("Previous list in for loop "+previousList);
-        } 
-      }*/
-      //var added = getAddedElements(workingdaysPrevious, workingdays);
+      if (event.data.previous.val() == null) {
+        console.log("There were no shifts set before for this worker");
+        admin.database().ref('generalCalendar').set(event.data.val());
+        return; 
+      } else {
 
-      var added = getAddedElements(event.data.previous.val(),event.data.val());
-      //workingdays = post.workInts;
-      //console.log("After getAddedElements workingdays: "+workingdays);
-      //console.log("And workingdaysPrevious: "+workingdaysPrevious);
-      //var removed = getRemovedElements(workingdaysPrevious,workingdays);
+      if (event.data.val() == null) {
+        //this means that all days have been removed from user's calendar
+        //need to remove the previous dates from the global calendar
+        //in this case the removedelements are the one in event.data.previous
+        //and there is no need to getRemovedElements
+      var added = [];
+      var removed = event.data.previous.val();
+    } else{//there are actually shifts in the calendar
       var removed = getRemovedElements(event.data.previous.val(),event.data.val());
-      //console.log("Before we had this " + previousList);
-      //console.log("Now we have this " + currentList);
+      var added = getAddedElements(event.data.previous.val(),event.data.val());
+    }
+      
+      //var removed = getRemovedElements(event.data.previous.val(),event.data.val());
+
       console.log("These have been added " + added);
       console.log("These have been removed " + removed);
       //will have to add the new elements to the globalCalendar
       //and remove the ones that were taken from the worker's calendar
+      //global calendar
+      //will have to write to the database, i'm thinking in two places
+      //one list for the shifts and one for the workers in a calendar
+
+      return admin.database().ref('generalCalendar').once('value').then(snap =>{
+          const alltheDays = snap.val();
+          console.log("alltheDays are: "+alltheDays);
+          removeThese(alltheDays,removed);
+          console.log("alltheDays after removeThese are: "+alltheDays);
+          for (var key in added) {
+                  if (alltheDays.hasOwnProperty(key)) {
+                    alltheDays.push(added[key]);
+                    }
+                }
+          console.log("After the for loop alltheDays is: "+alltheDays);
+          admin.database().ref('generalCalendar').set(alltheDays);
+          return; 
+      });
+      }
+      
+      
+      
+      
+      
+      /*var alldays = admin.database().ref('generalCalendar/').once('value')
+                      .then(function(dataSnapshot) {
+                //handle read data
+                console.log("This is all there is "+alldays);
+                console.log("dataSnapshot.val() "+dataSnapshot.val());
+                var auxdays = removeThese(dataSnapshot, removed);
+                console.log("After removeThese auxdays is: "+auxdays);
+                for (var key in added) {
+                  if (auxdays.hasOwnProperty(key)) {
+                    auxdays.push(added[key]);
+                    }
+                }
+                console.log("After the for loop auxdays is: "+auxdays);
+                return admin.database().ref('generalCalendar/').set(auxdays);  
+
+         });*/
+      
+      //should use promises with then. and a last catch to log the errors
+
+      
+      //if i get the list, i will loop and remove the removed ones
+      //then i will add the added ones and then reset the whole list of days
+      //return admin.database().ref('generalCalendar/').set(added);  
     });
+function removeThese(all, deleted) {
+  var allMinusDeleted = all;
+  for (var i = deleted.length;i >=0;i--) {
+    if (contains(all,deleted[i])) {
+      allMinusDeleted.splice(i,1);
+    }
+  }
+  console.log("allMinusDelete is: "+allMinusDeleted);
+  return allMinusDeleted;
+}
+
+
+
 
     
 function getAddedElements(previous,newShifts){

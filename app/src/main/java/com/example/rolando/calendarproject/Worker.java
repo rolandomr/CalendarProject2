@@ -13,6 +13,14 @@ public class Worker {
     private String number_id;
     private List<String> workDays = new ArrayList<>();
     private List<Long> workInts = new ArrayList<>();
+    private List<Long> holidays =  new ArrayList<>();
+
+    public Worker(String name, String number_id, List<Long> workInts, List<Long> holidays) {
+        this.name = name;
+        this.number_id = number_id;
+        this.workInts = workInts;
+        this.holidays = holidays;
+    }
 
     public Worker(String name, String number_id, List<Long> workInts) {
         this.name = name;
@@ -35,7 +43,10 @@ public class Worker {
         return workDays;
     }
 
-    /*public Worker(String name, String number_id, List<String> workDays) {
+    public List<Long> getHolidays() {
+        return holidays;
+    }
+/*public Worker(String name, String number_id, List<String> workDays) {
 
         this.name = name;
         this.number_id = number_id;

@@ -24,6 +24,7 @@ import java.util.List;
 public class CalendarAdapter extends ArrayAdapter<Calendar> {
 
     private HashSet<Calendar> workDays;
+    private HashSet<Calendar> holidays;
     //what if another set is added for holidays
 
     public CalendarAdapter(@NonNull Context context, @LayoutRes int resource) {
@@ -43,6 +44,11 @@ public class CalendarAdapter extends ArrayAdapter<Calendar> {
         this.workDays = workDays;
     }
 
+    public CalendarAdapter(Context context, ArrayList<Calendar> days, HashSet<Calendar> workDays, HashSet<Calendar> holidays) {
+        super(context, R.layout.day_item, days);
+        this.workDays = workDays;
+        this.holidays = holidays;
+    }
 
     @NonNull
     @Override
@@ -78,6 +84,16 @@ public class CalendarAdapter extends ArrayAdapter<Calendar> {
                             break;
                     }
                     break;
+                }
+            }
+        }
+
+        if (holidays != null) {
+            for (Calendar holiday : holidays) {
+                if (year == holiday.get(Calendar.YEAR) &&
+                        month == holiday.get(Calendar.MONTH) &&
+                        day == holiday.get(Calendar.DATE)) {
+                    calView.setBackgroundColor(0xff123456);
                 }
             }
         }

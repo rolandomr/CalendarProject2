@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String ANONYMOUS = "anonymous";
     public static final int RC_SIGN_IN = 1;
-
+    private boolean isAdmin;
     //Firebase instance variables
     private FirebaseDatabase mFirebaseDatabase;
     private DatabaseReference mDatabaseReference;
@@ -94,6 +94,12 @@ public class MainActivity extends AppCompatActivity {
                 String lusuarioName = (String) touchedName.getText();
                 i.putExtra("name", lusuarioName);//have to check if this is called with the proper valus
                 i.putExtra("userID", lusuarioID);
+                if (mUserID.equals("X1VNCBi485dm0liBcHbmPHFcAyi1")) {
+                    isAdmin = true;
+                } else {
+                    isAdmin = false;
+                }
+                i.putExtra("admin", isAdmin);
 
                 startActivity(i);
             }
@@ -242,6 +248,10 @@ public class MainActivity extends AppCompatActivity {
                 //typically you don't have permission to read the data
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
+                    Toast.makeText(getApplicationContext(),"ONCANCELLED in MainActivity",Toast.LENGTH_LONG).show();
+
+                    //isAdmin = false;//not the best way to differenciate worker and adming
+                    //will hardcode the user ID on the code just for now
                 }
             };
             mDatabaseReference.addChildEventListener(mChildEventListener);
