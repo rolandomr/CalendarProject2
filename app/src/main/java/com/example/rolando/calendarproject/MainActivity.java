@@ -38,6 +38,7 @@ import java.util.Arrays;
 public class MainActivity extends AppCompatActivity {
 
     private static final String ANONYMOUS = "anonymous";
+    private static final String ADMIN_ID = "X1VNCBi485dm0liBcHbmPHFcAyi1";
     public static final int RC_SIGN_IN = 1;
     private boolean isAdmin;
     //Firebase instance variables
@@ -94,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
                 String lusuarioName = (String) touchedName.getText();
                 i.putExtra("name", lusuarioName);//have to check if this is called with the proper valus
                 i.putExtra("userID", lusuarioID);
-                if (mUserID.equals("X1VNCBi485dm0liBcHbmPHFcAyi1")) {
+                if (mUserID.equals(ADMIN_ID)) {
                     isAdmin = true;
                 } else {
                     isAdmin = false;
@@ -249,6 +250,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
                     Toast.makeText(getApplicationContext(),"ONCANCELLED in MainActivity",Toast.LENGTH_LONG).show();
+                    Log.v("***********", "onCancelled called in list_of_workers");
 
                     //isAdmin = false;//not the best way to differenciate worker and adming
                     //will hardcode the user ID on the code just for now

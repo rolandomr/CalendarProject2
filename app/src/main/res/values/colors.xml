@@ -13,4 +13,9 @@
     <color name="darkgreen">#FF669900</color>
     <color name="darkorange">#FFFF8800</color>
     <color name="darkred">#FFCC0000</color>
+    <color name="morning_color">#FFFFEB3B</color>
+    <color name="afternoon_color">#FFD500F9</color>
+    <color name="night_color">#FF00B0FF</color>
+    <color name="requested_holidays_color">#FFF44336</color>
+    <color name="accepted_holidays_color">#FF76FF03</color>
 </resources>

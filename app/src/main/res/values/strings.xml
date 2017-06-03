@@ -4,4 +4,8 @@
     <string name="previous_month">Back</string>
     <string name="next_month">Next</string>
     <string name="sign_out">Sign Out</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="dialog_message">A user has requested holidays</string>
+    <string name="dialog_title">Holidays Request</string>
 </resources>

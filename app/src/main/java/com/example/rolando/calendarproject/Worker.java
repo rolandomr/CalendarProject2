@@ -11,13 +11,28 @@ public class Worker {
 
     private String name;
     private String number_id;
+    private boolean isActivated;
+    private boolean daysRequested;
     private List<String> workDays = new ArrayList<>();
     private List<Long> workInts = new ArrayList<>();
     private List<Long> holidays =  new ArrayList<>();
+    private List<Long> requestedHolidays = new ArrayList<>();
+
+    public List<Long> getRequestedHolidays() {
+        return requestedHolidays;
+    }
 
     public Worker(String name, String number_id, List<Long> workInts, List<Long> holidays) {
         this.name = name;
         this.number_id = number_id;
+        this.workInts = workInts;
+        this.holidays = holidays;
+    }
+
+    public Worker(String name, String number_id, boolean isActivated, List<Long> workInts, List<Long> holidays) {
+        this.name = name;
+        this.number_id = number_id;
+        this.isActivated = isActivated;
         this.workInts = workInts;
         this.holidays = holidays;
     }
@@ -28,13 +43,28 @@ public class Worker {
         this.workInts = workInts;
     }
 
+    public Worker(String name, String number_id, List<Long> workInts, List<Long> holidays, List<Long> requestedHolidays) {
+        this.name = name;
+        this.number_id = number_id;
+        this.workInts = workInts;
+        this.holidays = holidays;
+        this.requestedHolidays = requestedHolidays;
+    }
+
+    public boolean isDaysRequested() {
+        return daysRequested;
+    }
+
     public List<Long> getWorkInts() {
 
         return workInts;
     }
 
+    public boolean isActivated() {
+        return isActivated;
+    }
 
-//needed for firebase
+    //needed for firebase
     public Worker() {
     }
 

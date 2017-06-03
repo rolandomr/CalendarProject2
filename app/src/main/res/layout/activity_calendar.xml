@@ -12,7 +12,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:background="@drawable/common_google_signin_btn_text_light"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:textSize="36dp" />
@@ -65,7 +64,6 @@
         android:layout_below="@+id/week_days"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/headingColor"
         android:numColumns="7">
 
 
@@ -85,7 +83,8 @@
             android:layout_height="wrap_content"
             android:onClick="onRadioButtonClicked"
             android:text="Morning"
-            android:textColor="@color/buttonColorPressed" />
+            android:textColor="@color/morning_color"
+             />
 
         <RadioButton
             android:id="@+id/afternoon"
@@ -93,7 +92,7 @@
             android:layout_height="wrap_content"
             android:onClick="onRadioButtonClicked"
             android:text="Afternoon"
-            android:textColor="@android:color/holo_blue_bright" />
+            android:textColor="@color/afternoon_color" />
 
         <RadioButton
             android:id="@+id/night"
@@ -101,7 +100,7 @@
             android:layout_height="wrap_content"
             android:onClick="onRadioButtonClicked"
             android:text="Night"
-            android:textColor="@android:color/holo_green_light" />
+            android:textColor="@color/night_color" />
     </RadioGroup>
 
 
