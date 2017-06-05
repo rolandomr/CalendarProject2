@@ -27,6 +27,9 @@ public class CalendarAdapter extends ArrayAdapter<Calendar> {
     private HashSet<Calendar> workDays;
     private HashSet<Calendar> holidays;
     private HashSet<Calendar> requestedHolidays;
+    private ArrayList<Calendar> allWorkingDays;
+    private HashSet<Calendar> setOfAllDays;
+    private byte selector;
     //what if another set is added for holidays
 
     public CalendarAdapter(@NonNull Context context, @LayoutRes int resource) {
@@ -60,6 +63,16 @@ public class CalendarAdapter extends ArrayAdapter<Calendar> {
         this.requestedHolidays = requestedHolidays;
     }
 
+    public CalendarAdapter(Context context, ArrayList<Calendar> days, HashSet<Calendar> workDays,
+                           HashSet<Calendar> holidays, HashSet<Calendar> requestedHolidays, ArrayList<Calendar> allWorkingDays) {
+        super(context, R.layout.day_item, days);
+        this.workDays = workDays;
+        this.holidays = holidays;
+        this.requestedHolidays = requestedHolidays;
+        this.allWorkingDays = allWorkingDays;
+    }
+
+
 
     @NonNull
     @Override
@@ -75,7 +88,7 @@ public class CalendarAdapter extends ArrayAdapter<Calendar> {
             calView = LayoutInflater.from(getContext()).inflate(R.layout.day_item, parent, false);
         }
 //We're gonna set a different background color for those days that have been touched
-        if (workDays != null) {
+        if (workDays != null && workDays.size() != 0) {
             for (Calendar workDay : workDays) {
                 if (year == workDay.get(Calendar.YEAR) &&
                         month == workDay.get(Calendar.MONTH) &&
@@ -104,7 +117,83 @@ public class CalendarAdapter extends ArrayAdapter<Calendar> {
             }
         }
 
-        if (holidays != null) {
+
+        if (allWorkingDays.size()!=0 && allWorkingDays != null) {
+            //this is to remove duplicates and save CPU time
+            //setOfAllDays.addAll(allWorkingDays);
+            //allWorkingDays.clear();
+            //allWorkingDays.addAll(setOfAllDays);
+            for (Calendar actualDay :  allWorkingDays){
+                if (year == actualDay.get(Calendar.YEAR) &&
+                        month == actualDay.get(Calendar.MONTH) &&
+                        day == actualDay.get(Calendar.DATE)) {
+                    //the day is the one, now i have to see if there are others...morning, afternoon or night
+                    Calendar auxcal1 = Calendar.getInstance();
+                    auxcal1.set(Calendar.YEAR, year);
+                    auxcal1.set(Calendar.MONTH, month);
+                    auxcal1.set(Calendar.DATE, day);
+
+                    //if the current date is morning, will check if there are also afternoon and night
+                    if (actualDay.get(Calendar.HOUR_OF_DAY) == 7){
+                        selector = (byte) (selector| (1 << 1));
+                        auxcal1.set(Calendar.HOUR_OF_DAY, 15);
+                        if (allWorkingDays.contains(auxcal1))
+                            selector = (byte) (selector| (1 << 2));
+                        auxcal1.set(Calendar.HOUR_OF_DAY, 23);
+                        if (allWorkingDays.contains(auxcal1))
+                            selector = (byte) (selector| (1 << 3));
+                    }
+
+                    if (actualDay.get(Calendar.HOUR_OF_DAY) == 15){
+                        selector = (byte) (selector| (1 << 2));
+                        auxcal1.set(Calendar.HOUR_OF_DAY, 7);
+                        if (allWorkingDays.contains(auxcal1))
+                            selector = (byte) (selector| (1 << 1));
+                        auxcal1.set(Calendar.HOUR_OF_DAY, 23);
+                        if (allWorkingDays.contains(auxcal1))
+                            selector = (byte) (selector| (1 << 3));
+                    }
+                    if (actualDay.get(Calendar.HOUR_OF_DAY) == 23){
+                        selector = (byte) (selector| (1 << 3));
+                        auxcal1.set(Calendar.HOUR_OF_DAY, 15);
+                        if (allWorkingDays.contains(auxcal1))
+                            selector = (byte) (selector| (1 << 2));
+                        auxcal1.set(Calendar.HOUR_OF_DAY, 7);
+                        if (allWorkingDays.contains(auxcal1))
+                            selector = (byte) (selector| (1 << 1));
+                    }
+                    switch (selector) {
+                        case 0:
+                            calView.setBackgroundResource(R.drawable.free);
+                            break;
+                        case 1:
+                            calView.setBackgroundResource(R.drawable.just_morning);
+                            break;
+                        case 2:
+                            calView.setBackgroundResource(R.drawable.afternoon);
+                            break;
+                        case 3:
+                            calView.setBackgroundResource(R.drawable.morning_afternoon);
+                            break;
+                        case 4:
+                            calView.setBackgroundResource(R.drawable.night);
+                            break;
+                        case 5:
+                            calView.setBackgroundResource(R.drawable.morning_night);
+                            break;
+                        case 6:
+                            calView.setBackgroundResource(R.drawable.afternoon_night);
+                            break;
+                        case 7:
+                            calView.setBackgroundResource(R.drawable.morning_afternoon_night);
+                            break;
+                    }
+
+                }
+            }
+        }
+
+        if (holidays != null && holidays.size() != 0) {
             for (Calendar holiday : holidays) {
                 if (year == holiday.get(Calendar.YEAR) &&
                         month == holiday.get(Calendar.MONTH) &&
@@ -116,7 +205,7 @@ public class CalendarAdapter extends ArrayAdapter<Calendar> {
             }
         }
 
-        if (requestedHolidays!= null) {
+        if (requestedHolidays != null && requestedHolidays.size() != 0) {
             for (Calendar holiday : requestedHolidays) {
                 if (year == holiday.get(Calendar.YEAR) &&
                         month == holiday.get(Calendar.MONTH) &&
@@ -129,5 +218,18 @@ public class CalendarAdapter extends ArrayAdapter<Calendar> {
         }
         ((TextView) calView).setText(String.valueOf(date.get(Calendar.DATE)));
         return calView;
+    }
+
+    private HashSet<Calendar> generateGeneralCalendar(ArrayList<Calendar> alltheDays) {
+        HashSet<Calendar> returnedList = new HashSet<>();
+
+        if (alltheDays != null) {
+            for (Calendar cal : alltheDays) {
+
+        }
+
+
+        }
+        return returnedList;
     }
 }

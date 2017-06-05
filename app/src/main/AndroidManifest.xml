@@ -19,6 +19,8 @@
         </activity>
         <activity
             android:name=".CalendarActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait"
             android:label="@string/calendar_activity_name" />
     </application>
 

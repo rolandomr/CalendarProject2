@@ -23,6 +23,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.GenericTypeIndicator;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -53,6 +54,8 @@ public class CalendarActivity extends AppCompatActivity {
     private HashSet<Calendar> workingDays = new HashSet<Calendar>();
     private HashSet<Calendar> holidays = new HashSet<Calendar>();
     private HashSet<Calendar> requestedHolidays = new HashSet<Calendar>();
+    private ArrayList<Calendar> generalCalendar = new ArrayList<>();
+
     private int hourOfDay;
     private FirebaseDatabase mFirebaseDatabase;
     //references a specific part of the database
@@ -63,9 +66,12 @@ public class CalendarActivity extends AppCompatActivity {
     private DatabaseReference mDatabaseReferenceHolidays;
     private DatabaseReference mDatabaseReferenceRequestedHolidays;
     private DatabaseReference mDatabaseReferenceShifts;
+    private DatabaseReference mDatabaseReferenceGeneral;
+
     private ChildEventListener mChildEventListener;
     private ChildEventListener mChildEventListenerDaysRequested;
     private ChildEventListener mChildEventlistenerShifts;
+    private ChildEventListener mChildEventListenerGeneral;
     //declare it now, assign value later
     private TextView monthName;
     private TextView currentYear;
@@ -121,11 +127,13 @@ public class CalendarActivity extends AppCompatActivity {
         //mDatabaseReferenceRequestedHolidays = mFirebaseDatabase.getReference().child("requested_holidays/"+mUserID);
         mDatabaseReferenceRequestedHolidays = mFirebaseDatabase.getReference().child("requested_holidays");
 
+        mDatabaseReferenceGeneral = mFirebaseDatabase.getReference().child("generalCalendar");
 
         GridView daysOfWeek = (GridView) findViewById(R.id.week_days);
         ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, daysNames);
         daysOfWeek.setAdapter(adapter2);
+
 
         final Button okButton = (Button) findViewById(R.id.ok_button);
         if (isAdmin){
@@ -205,7 +213,8 @@ public class CalendarActivity extends AppCompatActivity {
                 currentCalendar.add(Calendar.MONTH, 1);
                 //drawMonth(workingDays);
                 //drawMonth(workingDays, holidays);
-                drawMonth(workingDays, holidays, requestedHolidays);
+                Log.i("***********", "DrawMonth called on nextmonth");
+                drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);
             }
         });
 
@@ -216,7 +225,8 @@ public class CalendarActivity extends AppCompatActivity {
             public void onClick(View v) {
                 //add a month to the current calendar
                 currentCalendar.add(Calendar.MONTH, -1);
-                drawMonth(workingDays, holidays, requestedHolidays);
+                Log.i("***********", "DrawMonth called on previousmonth");
+                drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);
 
             }
         });
@@ -264,7 +274,8 @@ public class CalendarActivity extends AppCompatActivity {
                                 } else {
                                     workingDays.add(date);
                                 }
-                                drawMonth(workingDays, holidays, requestedHolidays);
+                                Log.i("***********", "DrawMonth called in intemclicklistener ADMIN");
+                                drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);
                                 //drawMonth(workingDays);
                             }
                         //} //else workingDays.add(date);I ADDED THIS WHEN IT DIDN'T WORK WITH EWA and added above the if working!=null
@@ -280,33 +291,112 @@ public class CalendarActivity extends AppCompatActivity {
                                 } else {
                                     requestedHolidays.add(date);
                                 }
-                                drawMonth(workingDays, holidays,requestedHolidays);
+                                Log.i("***********", "DrawMonth called in intemclicklistener USER");
+                                drawMonth(workingDays, holidays,requestedHolidays, generalCalendar);
                             }
                         } //else workingDays.add(date);I ADDED THIS WHEN IT DIDN'T WORK WITH EWA and added above the if working!=null
                     }
                 }
             }
         });
+    //differenciate the ADMIN on a workers calendar, have to show the working days, requested holidays and holidays
+        //and when the admin enters the GENERAL CALENDAR, it's when it has touched the list with is userID
+        if (isAdmin){//if is admin only show the generalCalandar, that is with all the workers
+                    //but does this check if i enter as admin or enter the admins "calendar"
+            attachDatabaseReference_generalCalendar();
+        } else {
+            //mDatabaseReference.addChildEventListener(mChildEventListener);
+
+            //mDatabaseReference.addChildEventListener(mChildEventListener);
+
+            //drawMonth(workingDays);//problably will need to add to workingDays the dates read from the database
+            //attachDatabaseReference_requested_holidays();
+            attachDatabaseReference_workers();
+            attachDatabaseReference_shifts();
+        }
+
+
+
+        mDatabaseReferenceGeneral.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                //gonna make drawcalendar return an arraylist of calendars in days and set up the adapter here
+                Log.i("*********", "Here the adapter be created and set");
+                //CalendarAdapter adapter = new CalendarAdapter(getApplicationContext(), drawMonth2(), workingDays, holidays, requestedHolidays, generalCalendar);
+                //calendarGrid.setAdapter(adapter);
+                drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);//problably will need to add to workingDays the dates read from the database
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+
 
 
 
         //mDatabaseReference.addChildEventListener(mChildEventListener);
+        //Log.i("In generaCalendar", generalCalendar.toString());
 
         //mDatabaseReference.addChildEventListener(mChildEventListener);
-
-        drawMonth(workingDays, holidays, requestedHolidays);//problably will need to add to workingDays the dates read from the database
+        //Log.i("***********", "DrawMonth called in onitemclicklistener");
+        //drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);//problably will need to add to workingDays the dates read from the database
         //drawMonth(workingDays);//problably will need to add to workingDays the dates read from the database
         //attachDatabaseReference_requested_holidays();
-        attachDatabaseReference_workers();
-        attachDatabaseReference_shifts();
+        //attachDatabaseReference_workers();
+        //attachDatabaseReference_shifts();
 
-        if (isAdmin){
-            //attachDatabaseReference_generalCalendar();
-        }
+
     }
 
     private void attachDatabaseReference_generalCalendar() {
+        if (mChildEventListenerGeneral == null){
+            mChildEventListenerGeneral = new ChildEventListener() {
+                @Override
+                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                    Object objeto = dataSnapshot.getValue();
+                    Long date = (Long) dataSnapshot.getValue();
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTimeInMillis(date);
+                    generalCalendar.add(cal);
+                    Log.i("ChildAdded value",dataSnapshot.getValue().toString());
+                    Log.i("generalCalendar Listene", String.valueOf(generalCalendar.size()));
+                    //drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);//problably will need to add to workingDays the dates read from the database
+                }
 
+                @Override
+                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                    Log.i("ChildChanged value",dataSnapshot.getValue().toString());
+
+                }
+
+                @Override
+                public void onChildRemoved(DataSnapshot dataSnapshot) {
+                    Log.i("Childremoved value",dataSnapshot.getValue().toString());
+
+                }
+
+                @Override
+                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                    Log.i("ChildMoved value",dataSnapshot.getValue().toString());
+
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.i("Oncancelled value","for some reason");
+
+                }
+            };
+            //Log.i("DrawMonth called","inside attach generalCalendar");
+
+            //drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);//problably will need to add to workingDays the dates read from the database
+
+            mDatabaseReferenceGeneral.addChildEventListener(mChildEventListenerGeneral);
+        }
     }
 
     private void attachDatabaseReference_shifts() {
@@ -381,7 +471,8 @@ public class CalendarActivity extends AppCompatActivity {
                             workingDays = ConvertHashToList(longList);
                             holidays = ConvertHashToList(longListHolidays);
                             requestedHolidays = ConvertHashToList(longRequested);
-                            drawMonth(workingDays, holidays, requestedHolidays);//here i should have the daya from the database
+                            Log.i("***********", "DrawMonth called in attach...workers");
+                            drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);//here i should have the daya from the database
                         }
                     }
 
@@ -472,7 +563,8 @@ public class CalendarActivity extends AppCompatActivity {
                         //List<Long> longList = (List) dataSnapshot.getValue();
                         List<Long> longList = (List<Long>) dataSnapshot.getValue();
                         requestedHolidays = ConvertHashToList(longList);
-                        drawMonth(workingDays, holidays, requestedHolidays);
+                        Log.i("***********", "DrawMonth called in attach...requested");
+                        drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);
                     }
                 }
 
@@ -593,11 +685,11 @@ public class CalendarActivity extends AppCompatActivity {
 
 
     private void drawMonth() {
-        drawMonth(null, null, null);
+        drawMonth(null, null, null, null);
     }
 
     //private String[] drawMonth(int year, int month) {
-    private void drawMonth(HashSet<Calendar> workDays, HashSet<Calendar> holidays, HashSet<Calendar> requested) {
+    private void drawMonth(HashSet<Calendar> workDays, HashSet<Calendar> holidays, HashSet<Calendar> requested, ArrayList<Calendar> allDays) {
         //private void drawMonth(GridView calendar_grid) {
         Log.v("INSIDE DRAWYMONTH", "SEEMS TO BE WORKING OK");
         ArrayList<Calendar> days = new ArrayList<>();
@@ -628,11 +720,71 @@ public class CalendarActivity extends AppCompatActivity {
         //if (isAdmin){
           //  CalendarAdapterAdmin adapter = new CalendarAdapterAdmin(this, allWorkers);
         //} else {
-            CalendarAdapter adapter = new CalendarAdapter(this, days, workDays, holidays, requested);
+            //CalendarAdapter adapter = new CalendarAdapter(this, days, workDays, holidays, requested);
+            CalendarAdapter adapter = new CalendarAdapter(this, days, workDays, holidays, requested, allDays);
         //}
         //Can make another adapter for the Admin calendar that provides different type of day_items
         calendarGrid.setAdapter(adapter);
     }
+
+
+
+
+
+
+
+
+
+
+    private ArrayList<Calendar> drawMonth2() {
+        //private void drawMonth(GridView calendar_grid) {
+        Log.v("INSIDE DRAWYMONTH", "SEEMS TO BE WORKING OK");
+        ArrayList<Calendar> days = new ArrayList<>();
+
+        //final Calendar currentCalendar = Calendar.getInstance();
+        //year = currentCalendar.get(Calendar.YEAR);
+        //month = currentCalendar.get(Calendar.MONTH);
+        Calendar auxCal = (Calendar) currentCalendar.clone();
+        auxCal.setFirstDayOfWeek(Calendar.MONDAY);
+        auxCal.set(Calendar.DAY_OF_MONTH, 1);
+
+        int monthStartCell = auxCal.get(Calendar.DAY_OF_WEEK) - 2;
+
+        auxCal.add(Calendar.DAY_OF_MONTH, -monthStartCell);
+
+        for (int i = 0; i < CELLS_TO_SHOW; i++) {
+            days.add((Calendar) auxCal.clone());
+            auxCal.add(Calendar.DAY_OF_MONTH, 1);
+        }
+        //need to update the current month as well
+        monthName.setText(getMonthName(currentCalendar.get(Calendar.MONTH)));
+
+        //Very ugly work in the plane
+        Integer theYear = new Integer(currentCalendar.get(Calendar.YEAR));
+        currentYear.setText(theYear.toString());
+        //CalendarAdapter adapter = new CalendarAdapter(this, days, workDays);
+
+        return days;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     //need to fix this method, this is too ugly, list of months could be better,
     //even using the strings.xml in values should be better to allow different languages
