@@ -43,6 +43,30 @@ public class Worker {
         this.workInts = workInts;
     }
 
+    public void setActivated(boolean activated) {
+        isActivated = activated;
+    }
+
+    public void setDaysRequested(boolean daysRequested) {
+        this.daysRequested = daysRequested;
+    }
+
+    public void setWorkDays(List<String> workDays) {
+        this.workDays = workDays;
+    }
+
+    public void setWorkInts(List<Long> workInts) {
+        this.workInts = workInts;
+    }
+
+    public void setHolidays(List<Long> holidays) {
+        this.holidays = holidays;
+    }
+
+    public void setRequestedHolidays(List<Long> requestedHolidays) {
+        this.requestedHolidays = requestedHolidays;
+    }
+
     public Worker(String name, String number_id, List<Long> workInts, List<Long> holidays, List<Long> requestedHolidays) {
         this.name = name;
         this.number_id = number_id;

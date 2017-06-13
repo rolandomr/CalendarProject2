@@ -44,8 +44,10 @@ public class MainActivity extends AppCompatActivity {
     //Firebase instance variables
     private FirebaseDatabase mFirebaseDatabase;
     private DatabaseReference mDatabaseReference;
+    private DatabaseReference paralapruebadelosworkers;
     private FirebaseAuth mFirebaseAuth;
     private ChildEventListener mChildEventListener;
+    private ChildEventListener childeventparaworkers;
 
     private WorkerAdapter mWorkerAdapter;
     private ArrayList<Worker> list_of_workers = new ArrayList<Worker>();
@@ -64,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         //Initialize Firebase Components
         mFirebaseDatabase = FirebaseDatabase.getInstance();
         mDatabaseReference = mFirebaseDatabase.getReference().child("list_of_workers");
+        paralapruebadelosworkers = mFirebaseDatabase.getReference().child("workers");
         mFirebaseAuth = FirebaseAuth.getInstance();
 
         //unless there is already a list of people logged in, probably there is but i need to store
@@ -206,6 +209,39 @@ public class MainActivity extends AppCompatActivity {
         mDatabaseReference.child(mUserID).setValue(currela);
         //Setting the username and pulling the workers list when they are actually logged in
         attachDatabaseReadListener();
+        attachlonuevodelosworkers();
+    }
+
+    private void attachlonuevodelosworkers() {
+        if (childeventparaworkers == null) {
+            childeventparaworkers = new ChildEventListener() {
+                @Override
+                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                    Object obtejo = dataSnapshot.getValue();
+                }
+
+                @Override
+                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                }
+
+                @Override
+                public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                }
+
+                @Override
+                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            };
+            paralapruebadelosworkers.addChildEventListener(childeventparaworkers);
+        }
     }
 
     private void onSignedOutCleanUp() {

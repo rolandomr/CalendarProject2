@@ -95,21 +95,26 @@ public class CalendarAdapter extends ArrayAdapter<Calendar> {
                         day == workDay.get(Calendar.DATE)) {
                     switch (workDay.get(Calendar.HOUR_OF_DAY)) {
                         case 7:
-                            //calView.setBackgroundColor(0xffFFEB3B);
                             calView.setBackgroundColor(ContextCompat.getColor(getContext(),R.color.morning_color));
                             //calView.setBackgroundResource(R.drawable.day_complete);
                             break;
+                        case 6:
+                            calView.setBackgroundColor(ContextCompat.getColor(getContext(),R.color.morning_color));
+                            break;
                         case 15:
-                            //calView.setBackgroundColor(0xff00ffff);
-                            //calView.setBackgroundColor(0xffD500F9);
                             calView.setBackgroundColor(ContextCompat.getColor(getContext(),R.color.afternoon_color));
                             break;
+                        case 14:
+                            calView.setBackgroundColor(ContextCompat.getColor(getContext(),R.color.afternoon_color));
+                            break;
+                        case 22:
+                            calView.setBackgroundColor(ContextCompat.getColor(getContext(),R.color.night_color));
+                            break;
                         case 23:
-                            //calView.setBackgroundColor(0xff00B0FF);
                             calView.setBackgroundColor(ContextCompat.getColor(getContext(),R.color.night_color));
                             break;
                         default:
-                            calView.setBackgroundColor(0xffff0000);
+                            calView.setBackgroundColor(0xff123456);
                             break;
                     }
                     break;

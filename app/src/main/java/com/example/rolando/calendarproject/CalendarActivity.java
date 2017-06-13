@@ -33,8 +33,9 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
-import static android.icu.lang.UCharacter.GraphemeClusterBreak.L;
+import static android.R.attr.key;
 
 
 //import static com.example.rolando.calendarproject.R.id.currentCalendar;
@@ -55,6 +56,16 @@ public class CalendarActivity extends AppCompatActivity {
     private HashSet<Calendar> holidays = new HashSet<Calendar>();
     private HashSet<Calendar> requestedHolidays = new HashSet<Calendar>();
     private ArrayList<Calendar> generalCalendar = new ArrayList<>();
+    private static final String ADMIN_ID = "X1VNCBi485dm0liBcHbmPHFcAyi1";
+    private static final String WORKER_BUTTON_TEXT1 = "TOUCH HERE TO SELECT HOLIDAYS";
+    private static final String WORKER_BUTTON_TEXT2 = "REQUEST HOLIDAYS";
+    private static final String ADMIN_BUTTON_TEXT1 = "TOUCH HERE TO ASSIGN SHIFTS";
+    private static final String ADMIN_BUTTON_TEXT2 = "SET SHIFTS";
+    private static final String ADMIN_BUTTON_ACCEPT_HOLIDAYS = "ACCEPT";
+    private static final String ADMIN_BUTTON_REJECT_HOLIDAYS = "REJECT";
+
+
+    private Button okButton;
 
     private int hourOfDay;
     private FirebaseDatabase mFirebaseDatabase;
@@ -80,6 +91,7 @@ public class CalendarActivity extends AppCompatActivity {
     int day = currentCalendar.get(Calendar.DAY_OF_MONTH);
     //String[] tal = populateMonth(month);
 
+    //private String mUserID = "w1NsrUscyZX0PST0TZASdWbHRDl2";
     private String mUserID;
     private String mUserName;
 
@@ -120,12 +132,12 @@ public class CalendarActivity extends AppCompatActivity {
         mDatabaseReference = mFirebaseDatabase.getReference().child("workers").child(mUserID);
         //check the databasereferences to see which one is needed when
         mDatabaseReferenceWorkers = mFirebaseDatabase.getReference().child("workers");
-        mDatabaseReferenceShifts = mFirebaseDatabase.getReference().child("shifts");
+        //mDatabaseReferenceShifts = mFirebaseDatabase.getReference().child("shifts");commented
         //mDatabaseReference = mFirebaseDatabase.getReference().child("list_of_workers");
 
-        mDatabaseReferenceHolidays = mFirebaseDatabase.getReference().child("holidays");
+        //mDatabaseReferenceHolidays = mFirebaseDatabase.getReference().child("holidays");commented
         //mDatabaseReferenceRequestedHolidays = mFirebaseDatabase.getReference().child("requested_holidays/"+mUserID);
-        mDatabaseReferenceRequestedHolidays = mFirebaseDatabase.getReference().child("requested_holidays");
+        //mDatabaseReferenceRequestedHolidays = mFirebaseDatabase.getReference().child("requested_holidays");commented
 
         mDatabaseReferenceGeneral = mFirebaseDatabase.getReference().child("generalCalendar");
 
@@ -135,13 +147,36 @@ public class CalendarActivity extends AppCompatActivity {
         daysOfWeek.setAdapter(adapter2);
 
 
-        final Button okButton = (Button) findViewById(R.id.ok_button);
-        if (isAdmin){
+        okButton = (Button) findViewById(R.id.ok_button);
+
+        //if its the worker and its calendar touch to select holidays and send !isAdmin
+        //if its the admin with the general calendar, only see the all the dates
+        //if its the admin entering a workers calendar accept holidays and choose working days
+        calendarGrid.setClickable(false);
+        if (!isAdmin) {//worker and its calendar, holidays
+            RadioButton botton1 = (RadioButton) findViewById(R.id.morning);
+            RadioButton botton2 = (RadioButton) findViewById(R.id.afternoon);
+            RadioButton botton3 = (RadioButton) findViewById(R.id.night);
+            botton1.setVisibility(View.INVISIBLE);
+            botton2.setVisibility(View.INVISIBLE);
+            botton3.setVisibility(View.INVISIBLE);
+            okButton.setText(WORKER_BUTTON_TEXT1);
+            //listen to the button to be touched
+            touchButtonListenerWorker();
+        } else if (mUserName.equals(ADMIN_ID)) { //admin and general calendar
+
+        } else {//admin and workers calendar, set shifts and manage holidays
+            okButton.setText(ADMIN_BUTTON_TEXT1);
+            touchButtonListenerAdmin();
+        }
+
+        /*if (isAdmin && mUserName.equals(ADMIN_ID)){//the admin checks the generalCalancer
             okButton.setText("OK");
         } else {
             okButton.setText("REQUEST HOLIDAY");
-        }
-        okButton.setOnClickListener(new View.OnClickListener() {
+        }*/
+
+        /*okButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //when OK is clicked and before saving it to the database, i have to check
@@ -191,6 +226,7 @@ public class CalendarActivity extends AppCompatActivity {
                 }
             }
         });
+*/
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         String estaestuID = user.getUid();
         monthName = (TextView) findViewById(R.id.current_month);
@@ -235,28 +271,32 @@ public class CalendarActivity extends AppCompatActivity {
         calendarGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v,
                                     int position, long id) {
-
-                TextView day_tv = (TextView) v;
-                String goodDate = (String) day_tv.getText();
-                int theDay = Integer.parseInt(goodDate);
-                //Don't allow to change shifts today or before today
-                Calendar datecuen = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
-                        , currentCalendar.get(Calendar.MONTH), theDay, hourOfDay, 0);
-                if (datecuen.get(Calendar.DAY_OF_YEAR) <= Calendar.getInstance().get(Calendar.DAY_OF_YEAR)) {
-                    Toast.makeText(getApplicationContext(), "Cannot set shifts before today", Toast.LENGTH_SHORT).show();
-                } else {
-                    if (isAdmin) {
-                        Calendar date = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
-                                , currentCalendar.get(Calendar.MONTH), theDay, hourOfDay, 0);
-                        Calendar dateMorning = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
-                                , currentCalendar.get(Calendar.MONTH), theDay, 7, 0);
-                        Calendar dateAfternoon = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
-                                , currentCalendar.get(Calendar.MONTH), theDay, 15, 0);
-                        Calendar dateNight = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
-                                , currentCalendar.get(Calendar.MONTH), theDay, 23, 0);
-                        //Morning, Afternoon and Night i can also add a time to Calendar date depending
-                        //And in the adapter check which one it is to paint it accordingly
-                        //if (workingDays != null) {//CAREFULL WITH THIS BECAUSE THE ADMINISTRATOR HAS TO BE ABLE TO SET THE DATES
+                if (okButton.getText().equals(WORKER_BUTTON_TEXT1)) {
+                    Toast.makeText(getApplicationContext(), "Touch down to choose your holidays", Toast.LENGTH_SHORT).show();
+                } else if (okButton.getText().equals(ADMIN_BUTTON_TEXT1)) {
+                    Toast.makeText(getApplicationContext(), "Touch down to select shifts for this worker", Toast.LENGTH_SHORT).show();
+                }else {
+                    TextView day_tv = (TextView) v;
+                    String goodDate = (String) day_tv.getText();
+                    int theDay = Integer.parseInt(goodDate);
+                    //Don't allow to change shifts today or before today
+                    Calendar datecuen = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
+                            , currentCalendar.get(Calendar.MONTH), theDay, hourOfDay, 0);
+                    if (datecuen.get(Calendar.DAY_OF_YEAR) <= Calendar.getInstance().get(Calendar.DAY_OF_YEAR)) {
+                        Toast.makeText(getApplicationContext(), "Cannot set shifts before today", Toast.LENGTH_SHORT).show();
+                    } else {
+                        if (isAdmin) {
+                            Calendar date = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
+                                    , currentCalendar.get(Calendar.MONTH), theDay, hourOfDay, 0);
+                            Calendar dateMorning = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
+                                    , currentCalendar.get(Calendar.MONTH), theDay, 7, 0);
+                            Calendar dateAfternoon = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
+                                    , currentCalendar.get(Calendar.MONTH), theDay, 15, 0);
+                            Calendar dateNight = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
+                                    , currentCalendar.get(Calendar.MONTH), theDay, 23, 0);
+                            //Morning, Afternoon and Night i can also add a time to Calendar date depending
+                            //And in the adapter check which one it is to paint it accordingly
+                            //if (workingDays != null) {//CAREFULL WITH THIS BECAUSE THE ADMINISTRATOR HAS TO BE ABLE TO SET THE DATES
                             if ((position < 7 && theDay > 24) || (position > 27 && theDay < 15)) {
                                 Toast.makeText(getApplicationContext(), "Change month to pick this date", Toast.LENGTH_SHORT).show();
                             } else {//i could add/remove here from the database, or after the OK button, more logical
@@ -278,31 +318,31 @@ public class CalendarActivity extends AppCompatActivity {
                                 drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);
                                 //drawMonth(workingDays);
                             }
-                        //} //else workingDays.add(date);I ADDED THIS WHEN IT DIDN'T WORK WITH EWA and added above the if working!=null
-                    } else {//is the user
-                        Calendar date = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
-                                , currentCalendar.get(Calendar.MONTH), theDay, hourOfDay, 0);
-                        if (holidays != null) {//CAREFULL WITH THIS BECAUSE THE ADMINISTRATOR HAS TO BE ABLE TO SET THE DATES
-                            if ((position < 7 && theDay > 24) || (position > 27 && theDay < 15)) {
-                                Toast.makeText(getApplicationContext(), "Change month to pick this date", Toast.LENGTH_SHORT).show();
-                            } else {//i could add/remove here from the database, or after the OK button, more logical
-                                if (requestedHolidays.contains(date)) {//if was previusly selected, deselect
-                                    requestedHolidays.remove(date);
-                                } else {
-                                    requestedHolidays.add(date);
+                            //} //else workingDays.add(date);I ADDED THIS WHEN IT DIDN'T WORK WITH EWA and added above the if working!=null
+                        } else {//is the user
+                            Calendar date = new GregorianCalendar(currentCalendar.get(Calendar.YEAR)
+                                    , currentCalendar.get(Calendar.MONTH), theDay, hourOfDay, 0);
+                            if (holidays != null) {//CAREFULL WITH THIS BECAUSE THE ADMINISTRATOR HAS TO BE ABLE TO SET THE DATES
+                                if ((position < 7 && theDay > 24) || (position > 27 && theDay < 15)) {
+                                    Toast.makeText(getApplicationContext(), "Change month to pick this date", Toast.LENGTH_SHORT).show();
+                                } else {//i could add/remove here from the database, or after the OK button, more logical
+                                    if (requestedHolidays.contains(date)) {//if was previusly selected, deselect
+                                        requestedHolidays.remove(date);
+                                    } else {
+                                        requestedHolidays.add(date);
+                                    }
+                                    Log.i("***********", "DrawMonth called in intemclicklistener USER");
+                                    drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);
                                 }
-                                Log.i("***********", "DrawMonth called in intemclicklistener USER");
-                                drawMonth(workingDays, holidays,requestedHolidays, generalCalendar);
-                            }
-                        } //else workingDays.add(date);I ADDED THIS WHEN IT DIDN'T WORK WITH EWA and added above the if working!=null
+                            } //else workingDays.add(date);I ADDED THIS WHEN IT DIDN'T WORK WITH EWA and added above the if working!=null
+                        }
                     }
                 }
             }
         });
-    //differenciate the ADMIN on a workers calendar, have to show the working days, requested holidays and holidays
+        //differenciate the ADMIN on a workers calendar, have to show the working days, requested holidays and holidays
         //and when the admin enters the GENERAL CALENDAR, it's when it has touched the list with is userID
-        if (isAdmin){//if is admin only show the generalCalandar, that is with all the workers
-                    //but does this check if i enter as admin or enter the admins "calendar"
+        if (isAdmin && mUserName.equals(ADMIN_ID)) {//the admin checks the generalCalancer
             attachDatabaseReference_generalCalendar();
         } else {
             //mDatabaseReference.addChildEventListener(mChildEventListener);
@@ -312,9 +352,10 @@ public class CalendarActivity extends AppCompatActivity {
             //drawMonth(workingDays);//problably will need to add to workingDays the dates read from the database
             //attachDatabaseReference_requested_holidays();
             attachDatabaseReference_workers();
-            attachDatabaseReference_shifts();
+            //will not call, for now
+            //attachDatabaseReference_shifts();
+            //attachDatabaseReference_requested_holidays();
         }
-
 
 
         mDatabaseReferenceGeneral.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -335,9 +376,6 @@ public class CalendarActivity extends AppCompatActivity {
         });
 
 
-
-
-
         //mDatabaseReference.addChildEventListener(mChildEventListener);
         //Log.i("In generaCalendar", generalCalendar.toString());
 
@@ -352,8 +390,78 @@ public class CalendarActivity extends AppCompatActivity {
 
     }
 
+    private void touchButtonListenerAdmin() {
+        okButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (okButton.getText().equals(ADMIN_BUTTON_TEXT1)) {
+                    okButton.setText(ADMIN_BUTTON_TEXT2);
+                } else if (okButton.getText().equals(ADMIN_BUTTON_TEXT2)){
+                    if (workingDays.size() == 0) {//is this true? what about the ones gotten from the database
+                        Toast.makeText(getApplicationContext(), "No days have been selected", Toast.LENGTH_SHORT).show();
+                    } else {
+
+
+                        List<Long> listOfWorkingDays = makeListOfDatesLong(workingDays);
+                        List<Long> listOfHolidays = makeListOfDatesLong(holidays);
+
+                        if (checkHoursRestrictions(listOfWorkingDays)) {
+                            //Worker currentWorker = new Worker(mUserName, mUserID, listOfWorkingDays);
+                            Worker currentWorker = new Worker(mUserName, mUserID, listOfWorkingDays, listOfHolidays);
+                            //mDatabaseReference.push().setValue(currentWorker);
+                            //mDatabaseReference.child(mUserID).setValue(currentWorker);
+                            mDatabaseReference.setValue(currentWorker);
+                            //will not use for now
+                            //mDatabaseReferenceShifts.child(mUserID).setValue(listOfWorkingDays);
+                            Toast.makeText(getApplicationContext(), "Days added to the database", Toast.LENGTH_SHORT).show();
+                            //we are gonna write workingDaysworkingDays to the database
+                        }
+                    }
+                } else if (okButton.getText().equals(ADMIN_BUTTON_ACCEPT_HOLIDAYS)){
+                    List<Long> lisfOfHolidays = makeListOfDatesLong(requestedHolidays);
+                    Map<String, Object> childUpdates = new HashMap<>();
+                    childUpdates.put(mUserID+"/holidays", lisfOfHolidays);
+                    mDatabaseReferenceWorkers.updateChildren(childUpdates);
+                    mDatabaseReferenceWorkers.child(mUserID).child("requestedHolidays").removeValue();
+                    Toast.makeText(getApplicationContext(), "Holidays accepted", Toast.LENGTH_SHORT).show();
+                    okButton.setText(ADMIN_BUTTON_TEXT1);
+                }
+            }
+        });
+    }
+
+    private void touchButtonListenerWorker() {
+        okButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (okButton.getText().equals(WORKER_BUTTON_TEXT1)) {
+                    //calendarGrid.setClickable(true);
+                    okButton.setText(WORKER_BUTTON_TEXT2);
+                } else {//holidays have been selected on the calendar and are ready to be sent to the admin
+                    if (requestedHolidays.size() == 0) {
+                        Toast.makeText(getApplicationContext(), "No days have been selected", Toast.LENGTH_SHORT).show();
+                    } else {
+                        List<Long> listOfHolidays = makeListOfDatesLong(requestedHolidays);
+                        //mDatabaseReferenceWorkers.child(mUserID).child("requestedHolidays").updateChildren(listOfHolidays);
+                        //mDatabaseReferenceWorkers.child(mUserID).child("requestedHolidays").setValue(listOfHolidays);
+
+                        Map<String, Object> childUpdates = new HashMap<>();
+                        childUpdates.put(mUserID+"/requestedHolidays", listOfHolidays);
+                        mDatabaseReferenceWorkers.updateChildren(childUpdates);
+
+
+                        Toast.makeText(getApplicationContext(), "Holidays requested", Toast.LENGTH_SHORT).show();
+                        okButton.setText(WORKER_BUTTON_TEXT1);
+                    }
+                    //calendarGrid.setClickable(false);
+                    //okButton.setText(WORKER_BUTTON_TEXT2);
+                }
+            }
+        });
+    }
+
     private void attachDatabaseReference_generalCalendar() {
-        if (mChildEventListenerGeneral == null){
+        if (mChildEventListenerGeneral == null) {
             mChildEventListenerGeneral = new ChildEventListener() {
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
@@ -362,32 +470,32 @@ public class CalendarActivity extends AppCompatActivity {
                     Calendar cal = Calendar.getInstance();
                     cal.setTimeInMillis(date);
                     generalCalendar.add(cal);
-                    Log.i("ChildAdded value",dataSnapshot.getValue().toString());
+                    Log.i("ChildAdded value", dataSnapshot.getValue().toString());
                     Log.i("generalCalendar Listene", String.valueOf(generalCalendar.size()));
                     //drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);//problably will need to add to workingDays the dates read from the database
                 }
 
                 @Override
                 public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                    Log.i("ChildChanged value",dataSnapshot.getValue().toString());
+                    Log.i("ChildChanged value", dataSnapshot.getValue().toString());
 
                 }
 
                 @Override
                 public void onChildRemoved(DataSnapshot dataSnapshot) {
-                    Log.i("Childremoved value",dataSnapshot.getValue().toString());
+                    Log.i("Childremoved value", dataSnapshot.getValue().toString());
 
                 }
 
                 @Override
                 public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-                    Log.i("ChildMoved value",dataSnapshot.getValue().toString());
+                    Log.i("ChildMoved value", dataSnapshot.getValue().toString());
 
                 }
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    Log.i("Oncancelled value","for some reason");
+                    Log.i("Oncancelled value", "for some reason");
 
                 }
             };
@@ -400,12 +508,12 @@ public class CalendarActivity extends AppCompatActivity {
     }
 
     private void attachDatabaseReference_shifts() {
-        if (mChildEventlistenerShifts == null){
+        if (mChildEventlistenerShifts == null) {
             mChildEventlistenerShifts = new ChildEventListener() {
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                    Log.v("ChildAdded key",dataSnapshot.getKey().toString());
-                    Log.v("ChildAdded value",dataSnapshot.getValue().toString());
+                    Log.v("ChildAdded key", dataSnapshot.getKey().toString());
+                    Log.v("ChildAdded value", dataSnapshot.getValue().toString());
                 }
 
                 @Override
@@ -449,17 +557,18 @@ public class CalendarActivity extends AppCompatActivity {
                     }
                     if (dataSnapshot.getKey().equals("holidays")) {
                         List<Long> longList = (List) dataSnapshot.getValue();
-                        workingDays = ConvertHashToList(longList);
+                        holidays = ConvertHashToList(longList);
                     }
                     if (dataSnapshot.getKey().equals("requested_holidays")) {
                         List<Long> longList = (List) dataSnapshot.getValue();
-                        workingDays = ConvertHashToList(longList);
+                        requestedHolidays = ConvertHashToList(longList);
                     }
+                    // I will need the requestedHolidays in order to tell the admin and add them to holidays
                     if (dataSnapshot.getKey().equals("requestedHolidays")) {
                         List<Long> longList = (List) dataSnapshot.getValue();
                         requestedHolidays = ConvertHashToList(longList);
                     }
-                    //drawMonth(workingDays, holidays, requestedHolidays);//here i should have the daya from the database
+                    //drawMonth(workingDays, holidays, requestedHolidays);//here i should have the days from the database
                     Worker worker = dataSnapshot.getValue(Worker.class);
                     String laestring = dataSnapshot.getKey();//i think this is the id
                     if (worker != null) {
@@ -468,6 +577,23 @@ public class CalendarActivity extends AppCompatActivity {
                             List<Long> longList = worker.getWorkInts();
                             List<Long> longListHolidays = worker.getHolidays();
                             List<Long> longRequested = worker.getRequestedHolidays();
+                            if (longRequested.size() != 0 && isAdmin) {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(CalendarActivity.this);
+                                builder.setMessage(R.string.dialog_message).setTitle(R.string.dialog_title);
+                                builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        //List<Long> auxlis = new ArrayList<Long>();
+                                        //auxlis = makeListOfDatesLong((requestedHolidays));
+                                        //mDatabaseReferenceWorkers.child(mUserID).child("holidays").setValue(auxlis);
+                                        //mDatabaseReferenceWorkers.child(mUserID).child("requestedHolidays").removeValue();
+                                        Toast.makeText(getApplicationContext(), "Holidays accepted", Toast.LENGTH_SHORT).show();
+                                        okButton.setText(ADMIN_BUTTON_ACCEPT_HOLIDAYS);
+                                    }
+                                });
+                                AlertDialog dialog = builder.create();
+
+                                dialog.show();
+                            }
                             workingDays = ConvertHashToList(longList);
                             holidays = ConvertHashToList(longListHolidays);
                             requestedHolidays = ConvertHashToList(longRequested);
@@ -476,7 +602,13 @@ public class CalendarActivity extends AppCompatActivity {
                         }
                     }
 
-                    if (isAdmin) {
+
+
+
+
+
+
+                    if (3==4) {//condition to show the alert dialog for when holidays have been requested
 
                         // 1. Instantiate an AlertDialog.Builder with its constructor
                         AlertDialog.Builder builder = new AlertDialog.Builder(CalendarActivity.this);
@@ -488,8 +620,11 @@ public class CalendarActivity extends AppCompatActivity {
                         // Add the buttons
                         builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                // User clicked OK button
-                                Toast.makeText(getApplicationContext(),"Holidays accepted", Toast.LENGTH_SHORT).show();
+                                List<Long> auxlis = new ArrayList<Long>();
+                                auxlis = makeListOfDatesLong((requestedHolidays));
+                                mDatabaseReferenceWorkers.child(mUserID).child("holidays").setValue(auxlis);
+                                mDatabaseReferenceWorkers.child(mUserID).child("requestedHolidays").removeValue();
+                                Toast.makeText(getApplicationContext(), "Holidays accepted", Toast.LENGTH_SHORT).show();
                             }
                         });
                         builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -507,27 +642,71 @@ public class CalendarActivity extends AppCompatActivity {
                     }
                     //drawMonth(workingDays,holidays, requestedHolidays);//here i should have the daya from the database
                 }
+
                 @Override
-                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                public void onChildChanged(DataSnapshot dataSnapshot, String s) {//to update the days when de app is open
                     String key = dataSnapshot.getKey();
                     Object data = dataSnapshot.getValue();
+
+
+                    Worker worker = dataSnapshot.getValue(Worker.class);
+                    String laestring = dataSnapshot.getKey();//i think this is the id
+                    if (worker != null) {
+                        if (laestring.equals(mUserID)) {
+                            //if (worker.getNumber_id().equals(mUserID)) {
+                            List<Long> longList = worker.getWorkInts();
+                            List<Long> longListHolidays = worker.getHolidays();
+                            List<Long> longRequested = worker.getRequestedHolidays();
+                            if (longRequested.size() != 0 && isAdmin) {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(CalendarActivity.this);
+                                builder.setMessage(R.string.dialog_message).setTitle(R.string.dialog_title);
+                                builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        //List<Long> auxlis = new ArrayList<Long>();
+                                        //auxlis = makeListOfDatesLong((requestedHolidays));
+                                        //mDatabaseReferenceWorkers.child(mUserID).child("holidays").setValue(auxlis);
+                                        //mDatabaseReferenceWorkers.child(mUserID).child("requestedHolidays").removeValue();
+                                        Toast.makeText(getApplicationContext(), "Holidays accepted", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                                AlertDialog dialog = builder.create();
+
+                                dialog.show();
+                            }
+                            workingDays = ConvertHashToList(longList);
+                            holidays = ConvertHashToList(longListHolidays);
+                            requestedHolidays = ConvertHashToList(longRequested);
+                            drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);//here i should have the daya from the database
+                        }
+                    }
+
+
+                    if (dataSnapshot.getKey().equals("workInts")) {
+                        List<Long> longList = (List) dataSnapshot.getValue();
+                        //workingDays = ConvertHashToList(longList);//i should ADD not convert
+                        workingDays.addAll(ConvertHashToList(longList));
+                    }
+                    //drawMonth(workingDays, holidays, requestedHolidays, generalCalendar);
                     Toast.makeText(getApplicationContext(), "onChildChanged in Calendar Activity", Toast.LENGTH_LONG).show();
                     Log.i("**********", "childChanged " + dataSnapshot.toString());
                 }
+
                 @Override
                 public void onChildRemoved(DataSnapshot dataSnapshot) {
                     Toast.makeText(getApplicationContext(), "onChildRemoved in Calendar Activity", Toast.LENGTH_LONG).show();
                     Log.i("**********", "childRemoved " + dataSnapshot.toString());
                 }
+
                 @Override
                 public void onChildMoved(DataSnapshot dataSnapshot, String s) {
                     Toast.makeText(getApplicationContext(), "onChildMoved in Calendar Activity", Toast.LENGTH_LONG).show();
                     Log.i("**********", "childMoved " + dataSnapshot.toString());
                 }
+
                 @Override
                 public void onCancelled(DatabaseError databaseError) {//normally means you don't have permission to read the data
                     Toast.makeText(getApplicationContext(), "onCancelled in Calendar Activity", Toast.LENGTH_LONG).show();
-                    Log.v("*********",databaseError.toString());
+                    Log.v("*********", databaseError.toString());
                     //FirebaseCrash.report(databaseError.toException());
                     //FirebaseCrash.report(databaseError.toException());
                 }
@@ -546,10 +725,11 @@ public class CalendarActivity extends AppCompatActivity {
                     Log.v("***********", "There has beem an addition in daysRequested");
                     //List<Long> longList = (List) dataSnapshot.getValue();
                     if (dataSnapshot.getKey().equals(mUserID)) {//check if it's the current user branch
-                        RequestedHolidays reques =  new RequestedHolidays();
+                        RequestedHolidays reques = new RequestedHolidays();
                         //reques = dataSnapshot.getValue(RequestedHolidays.class);
                         GenericTypeIndicator<List<Long>> t =
-                                new GenericTypeIndicator<List<Long>>() {};
+                                new GenericTypeIndicator<List<Long>>() {
+                                };
 
                         Object objecto = dataSnapshot.getValue();
                         //List<Long> messages = dataSnapshot.getValue(t);
@@ -586,7 +766,7 @@ public class CalendarActivity extends AppCompatActivity {
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    Toast.makeText(getApplicationContext(),"ONCANCELLED in /requested_holidays",Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "ONCANCELLED in /requested_holidays", Toast.LENGTH_LONG).show();
                     Log.i("***********", "ONCANCELLED IN /requested_holidays");
                 }
             };
@@ -649,17 +829,17 @@ public class CalendarActivity extends AppCompatActivity {
         //SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/YYYY");
         //SimpleDateFormat sdf = new SimpleDateFormat();
         List<Long> days = new ArrayList<>();
-        if (workDays!= null) {
-        for (Calendar date : workDays) {
-            //SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/YYYY");
-            //days.add(sdf.format(date.getTime()));
-            days.add(date.getTimeInMillis());
-        }
+        if (workDays != null) {
+            for (Calendar date : workDays) {
+                //SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/YYYY");
+                //days.add(sdf.format(date.getTime()));
+                days.add(date.getTimeInMillis());
+            }
         }
         return days;
     }
 
-    private HashSet<Calendar> makeMapHash(HashMap<String,Long> mapWithLongs) {
+    private HashSet<Calendar> makeMapHash(HashMap<String, Long> mapWithLongs) {
         HashSet<Calendar> dates = new HashSet<Calendar>();
         for (Long date : mapWithLongs.values()) {
             Calendar cal = Calendar.getInstance();
@@ -718,22 +898,14 @@ public class CalendarActivity extends AppCompatActivity {
         //CalendarAdapter adapter = new CalendarAdapter(this, days, workDays);
 
         //if (isAdmin){
-          //  CalendarAdapterAdmin adapter = new CalendarAdapterAdmin(this, allWorkers);
+        //  CalendarAdapterAdmin adapter = new CalendarAdapterAdmin(this, allWorkers);
         //} else {
-            //CalendarAdapter adapter = new CalendarAdapter(this, days, workDays, holidays, requested);
-            CalendarAdapter adapter = new CalendarAdapter(this, days, workDays, holidays, requested, allDays);
+        //CalendarAdapter adapter = new CalendarAdapter(this, days, workDays, holidays, requested);
+        CalendarAdapter adapter = new CalendarAdapter(this, days, workDays, holidays, requested, allDays);
         //}
         //Can make another adapter for the Admin calendar that provides different type of day_items
         calendarGrid.setAdapter(adapter);
     }
-
-
-
-
-
-
-
-
 
 
     private ArrayList<Calendar> drawMonth2() {
@@ -766,24 +938,6 @@ public class CalendarActivity extends AppCompatActivity {
 
         return days;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     //need to fix this method, this is too ugly, list of months could be better,
