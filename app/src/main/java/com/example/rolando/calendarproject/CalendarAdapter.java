@@ -139,33 +139,34 @@ public class CalendarAdapter extends ArrayAdapter<Calendar> {
                     auxcal1.set(Calendar.DATE, day);
 
                     //if the current date is morning, will check if there are also afternoon and night
-                    if (actualDay.get(Calendar.HOUR_OF_DAY) == 7){
-                        selector = (byte) (selector| (1 << 1));
+                    int i = actualDay.get(Calendar.HOUR_OF_DAY);
+                    if (i == 7){
+                        selector = (byte) (selector| (1 << 0));
                         auxcal1.set(Calendar.HOUR_OF_DAY, 15);
                         if (allWorkingDays.contains(auxcal1))
-                            selector = (byte) (selector| (1 << 2));
+                            selector = (byte) (selector| (1 << 1));
                         auxcal1.set(Calendar.HOUR_OF_DAY, 23);
                         if (allWorkingDays.contains(auxcal1))
-                            selector = (byte) (selector| (1 << 3));
+                            selector = (byte) (selector| (1 << 2));
                     }
 
-                    if (actualDay.get(Calendar.HOUR_OF_DAY) == 15){
-                        selector = (byte) (selector| (1 << 2));
+                    if (i == 15){
+                        selector = (byte) (selector| (1 << 1));
                         auxcal1.set(Calendar.HOUR_OF_DAY, 7);
                         if (allWorkingDays.contains(auxcal1))
-                            selector = (byte) (selector| (1 << 1));
+                            selector = (byte) (selector| (1 << 0));
                         auxcal1.set(Calendar.HOUR_OF_DAY, 23);
                         if (allWorkingDays.contains(auxcal1))
-                            selector = (byte) (selector| (1 << 3));
+                            selector = (byte) (selector| (1 << 2));
                     }
-                    if (actualDay.get(Calendar.HOUR_OF_DAY) == 23){
-                        selector = (byte) (selector| (1 << 3));
+                    if (i == 23){
+                        selector = (byte) (selector| (1 << 2));
                         auxcal1.set(Calendar.HOUR_OF_DAY, 15);
                         if (allWorkingDays.contains(auxcal1))
-                            selector = (byte) (selector| (1 << 2));
+                            selector = (byte) (selector| (1 << 1));
                         auxcal1.set(Calendar.HOUR_OF_DAY, 7);
                         if (allWorkingDays.contains(auxcal1))
-                            selector = (byte) (selector| (1 << 1));
+                            selector = (byte) (selector| (1 << 0));
                     }
                     switch (selector) {
                         case 0:
@@ -221,20 +222,10 @@ public class CalendarAdapter extends ArrayAdapter<Calendar> {
                 }
             }
         }
+        //i have to check if it corresponds to the current month or not and
+        //calView is a View type
         ((TextView) calView).setText(String.valueOf(date.get(Calendar.DATE)));
         return calView;
     }
 
-    private HashSet<Calendar> generateGeneralCalendar(ArrayList<Calendar> alltheDays) {
-        HashSet<Calendar> returnedList = new HashSet<>();
-
-        if (alltheDays != null) {
-            for (Calendar cal : alltheDays) {
-
-        }
-
-
-        }
-        return returnedList;
-    }
 }

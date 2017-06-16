@@ -73,8 +73,8 @@ public class MainActivity extends AppCompatActivity {
         //them for long term service, not just currently connected
 
 
-        LinearLayout rootview = (LinearLayout) findViewById(R.id.rootView);
-        TextView persona = (TextView) findViewById(R.id.abre_calendario);
+        //LinearLayout rootview = (LinearLayout) findViewById(R.id.rootView);
+        //TextView persona = (TextView) findViewById(R.id.abre_calendario);
 
 
         mWorkerAdapter = new WorkerAdapter(this, list_of_workers);
@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        persona.setOnClickListener(new View.OnClickListener() {
+        /*persona.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent i = new Intent(MainActivity.this, CalendarActivity.class);
@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
                 i.putExtra("userID", mUserID);
                 startActivity(i);
             }
-        });
+        });*/
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
 
             @Override

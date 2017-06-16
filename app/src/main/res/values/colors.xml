@@ -18,4 +18,5 @@
     <color name="night_color">#FF00B0FF</color>
     <color name="requested_holidays_color">#FFF44336</color>
     <color name="accepted_holidays_color">#FF76FF03</color>
+    <color name="grey">#9E9E9E</color>
 </resources>

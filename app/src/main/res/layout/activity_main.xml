@@ -8,13 +8,6 @@
     android:orientation="vertical"
     tools:context="com.example.rolando.calendarproject.MainActivity">
 
-    <TextView
-        android:id="@+id/abre_calendario"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:text="Persona" />
-
     <ListView
         android:id="@+id/list"
         android:layout_width="match_parent"

@@ -68,12 +68,62 @@
 
 
     </GridView>
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:id="@+id/color_legend"
+    android:layout_below="@+id/calendar_grid"
+    >
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/legend1"
+        android:text="Morning"
+        android:padding="8dp"
+        android:background="@color/morning_color"
+        android:layout_weight="1"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/legend2"
+        android:padding="8dp"
+        android:text="Afternoon"
+        android:background="@color/afternoon_color"
+        android:layout_weight="1"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/legend3"
+        android:text="Night"
+        android:padding="8dp"
+        android:background="@color/night_color"
+        android:layout_weight="1"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/legend4"
+        android:text="Holidays"
+        android:padding="8dp"
+        android:background="@color/accepted_holidays_color"
+        android:layout_weight="1"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Requested Holidays"
+        android:id="@+id/legend5"
+        android:padding="8dp"
+        android:textSize="16sp"
+        android:background="@color/requested_holidays_color"
+        android:layout_weight="1"/>
+
+</LinearLayout>
     <RadioGroup
         android:id="@+id/radiobuttons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/ok_button"
+        android:layout_above="@+id/botton_buttons"
         android:checkedButton="@+id/morning"
         android:gravity="center_horizontal"
         android:orientation="horizontal">
@@ -103,16 +153,40 @@
             android:textColor="@color/night_color" />
     </RadioGroup>
 
+<LinearLayout
+    android:id="@+id/botton_buttons"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:layout_alignParentBottom="true"
+    android:orientation="horizontal">
+
+
+    <Button
+        android:id="@+id/cancel_button"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@color/grey" />
 
     <Button
         android:id="@+id/ok_button"
+        style="@style/Base.Widget.AppCompat.ActionButton"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@color/grey" />
+</LinearLayout>
+
+    <!--<Button
+        android:id="@+id/ok_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/red"
+        android:background="@color/grey"
         android:gravity="center"
-        android:textSize="24sp"
+        android:textSize="16sp"
         android:layout_alignParentBottom="true"
-        android:visibility="visible" />
+        android:visibility="visible" />-->
 
     <!--<CalendarView-->
     <!--android:id="@+id/calendar"-->
