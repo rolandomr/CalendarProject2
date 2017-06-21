@@ -96,13 +96,17 @@ public class MainActivity extends AppCompatActivity {
                 TextView touchedName = (TextView)view.findViewById(R.id.name);
                 String lusuarioID = (String) touchedID.getText();
                 String lusuarioName = (String) touchedName.getText();
-                i.putExtra("name", lusuarioName);//have to check if this is called with the proper valus
-                i.putExtra("userID", lusuarioID);
+                //i.putExtra("name", lusuarioName);//have to check if this is called with the proper valus
+                //i.putExtra("userID", lusuarioID);
                 if (mUserID.equals(ADMIN_ID)) {
                     isAdmin = true;
+                    if (lusuarioName.equals("General Calendar"))
+                        lusuarioID = mUserID;
                 } else {
                     isAdmin = false;
                 }
+                i.putExtra("name", lusuarioName);//have to check if this is called with the proper valus
+                i.putExtra("userID", lusuarioID);
                 i.putExtra("admin", isAdmin);
 
                 startActivity(i);

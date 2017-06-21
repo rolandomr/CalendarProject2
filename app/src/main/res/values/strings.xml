@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CalendarProject</string>
+    <string name="app_name">Shift Calendar Management</string>
     <string name="calendar_activity_name">Calendar</string>
     <string name="previous_month">Back</string>
     <string name="next_month">Next</string>

@@ -1,6 +1,7 @@
 package com.example.rolando.calendarproject;
 
 import android.app.Activity;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -36,15 +37,26 @@ public class WorkerAdapter extends ArrayAdapter<Worker> {
 
         // Find the TextView in the list_item.xml layout with the ID version_name
         TextView nameTextView = (TextView) listItemView.findViewById(R.id.name);
+        TextView numberTextView = (TextView) listItemView.findViewById(R.id.number_id);
+
         // Get the version name from the current AndroidFlavor object and
         // set this text on the name TextView
-        nameTextView.setText(currentWorker.getName());
+        //nameTextView.setText(currentWorker.getName());
 
         // Find the TextView in the list_item.xml layout with the ID version_number
-        TextView numberTextView = (TextView) listItemView.findViewById(R.id.number_id);
+        //TextView numberTextView = (TextView) listItemView.findViewById(R.id.number_id);
         // Get the version number from the current AndroidFlavor object and
         // set this text on the number TextView
-        numberTextView.setText(currentWorker.getNumber_id());
+        if (currentWorker.getNumber_id().equals("X1VNCBi485dm0liBcHbmPHFcAyi1")){//
+            numberTextView.setText("");
+            nameTextView.setText("General Calendar");
+            //listItemView.setBackgroundResource(R.color.linkColor);
+        } else {
+            numberTextView.setText(currentWorker.getNumber_id());
+            nameTextView.setText(currentWorker.getName());
+
+        }
+
 
         // Find the ImageView in the list_item.xml layout with the ID list_item_icon
         //ImageView iconView = (ImageView) listItemView.findViewById(R.id.list_item_icon);

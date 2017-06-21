@@ -155,7 +155,7 @@ public class CalendarActivity extends AppCompatActivity {
                 android.R.layout.simple_list_item_1, daysNames);
         daysOfWeek.setAdapter(adapter2);
 
-
+        //setTitle(mUserName); this is used to set the tittle of the Activity
         okButton = (Button) findViewById(R.id.ok_button);
         cancelButton = (Button) findViewById(R.id.cancel_button);
 
@@ -167,23 +167,51 @@ public class CalendarActivity extends AppCompatActivity {
             RadioButton botton1 = (RadioButton) findViewById(R.id.morning);
             RadioButton botton2 = (RadioButton) findViewById(R.id.afternoon);
             RadioButton botton3 = (RadioButton) findViewById(R.id.night);
+            legend1 = (TextView) findViewById(R.id.legend1);
+            legend2 = (TextView) findViewById(R.id.legend2);
+            legend3 = (TextView) findViewById(R.id.legend3);
+            legend4 = (TextView) findViewById(R.id.legend4);
+            legend5 = (TextView) findViewById(R.id.legend5);
             botton1.setVisibility(View.INVISIBLE);
             botton2.setVisibility(View.INVISIBLE);
             botton3.setVisibility(View.INVISIBLE);
             okButton.setText(WORKER_BUTTON_TEXT1);
             //listen to the button to be touched
             touchButtonListenerWorker();
-        } else if (mUserName.equals(ADMIN_ID)) { //admin and general calendar
+        } else if (mUserName.equals("General Calendar")) { //admin and general calendar
             RadioButton botton1 = (RadioButton) findViewById(R.id.morning);
             RadioButton botton2 = (RadioButton) findViewById(R.id.afternoon);
             RadioButton botton3 = (RadioButton) findViewById(R.id.night);
+            legend1 = (TextView) findViewById(R.id.legend1);
+            legend2 = (TextView) findViewById(R.id.legend2);
+            legend3 = (TextView) findViewById(R.id.legend3);
+            legend4 = (TextView) findViewById(R.id.legend4);
+            legend5 = (TextView) findViewById(R.id.legend5);
+
+            legend1.setVisibility(View.INVISIBLE);
+            legend2.setVisibility(View.INVISIBLE);
+            legend3.setVisibility(View.INVISIBLE);
+            legend4.setVisibility(View.INVISIBLE);
+            legend5.setVisibility(View.INVISIBLE);
             botton1.setVisibility(View.INVISIBLE);
             botton2.setVisibility(View.INVISIBLE);
             botton3.setVisibility(View.INVISIBLE);
             okButton.setText("");
-
+            cancelButton = (Button) findViewById(R.id.cancel_button);
+            cancelButton.setText("");
         } else {//admin and workers calendar, set shifts and manage holidays
             okButton.setText(ADMIN_BUTTON_TEXT1);
+            legend1 = (TextView) findViewById(R.id.legend1);
+            legend2 = (TextView) findViewById(R.id.legend2);
+            legend3 = (TextView) findViewById(R.id.legend3);
+            legend4 = (TextView) findViewById(R.id.legend4);
+            legend5 = (TextView) findViewById(R.id.legend5);
+
+            legend1.setVisibility(View.INVISIBLE);
+            legend2.setVisibility(View.INVISIBLE);
+            legend3.setVisibility(View.INVISIBLE);
+            legend4.setVisibility(View.INVISIBLE);
+            legend5.setVisibility(View.INVISIBLE);
             touchButtonListenerAdmin();
         }
 
@@ -249,11 +277,11 @@ public class CalendarActivity extends AppCompatActivity {
         monthName = (TextView) findViewById(R.id.current_month);
         currentYear = (TextView) findViewById(R.id.current_year);
 
-        legend1 = (TextView) findViewById(R.id.legend1);
+        /*legend1 = (TextView) findViewById(R.id.legend1);
         legend2 = (TextView) findViewById(R.id.legend2);
         legend3 = (TextView) findViewById(R.id.legend3);
         legend4 = (TextView) findViewById(R.id.legend4);
-        legend5 = (TextView) findViewById(R.id.legend5);
+        legend5 = (TextView) findViewById(R.id.legend5);*/
 
         //int elMes = currentCalendar.get(Calendar.MONTH);
         //monthName.setText(getMonthName(elMes));
@@ -371,7 +399,7 @@ public class CalendarActivity extends AppCompatActivity {
         });
         //differenciate the ADMIN on a workers calendar, have to show the working days, requested holidays and holidays
         //and when the admin enters the GENERAL CALENDAR, it's when it has touched the list with is userID
-        if (isAdmin && mUserID.equals(ADMIN_ID)) {//the admin checks the generalCalancer
+        if (isAdmin && mUserID.equals(ADMIN_ID)) {//the admin checks the generalCalandar
             attachDatabaseReference_generalCalendar();
         } else {
             //mDatabaseReference.addChildEventListener(mChildEventListener);

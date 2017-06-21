@@ -5,7 +5,7 @@ const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
 // Adds a message that welcomes new users into the chat.
-exports.addWelcomeMessages = functions.auth.user().onCreate((event) => {
+/*exports.addWelcomeMessages = functions.auth.user().onCreate((event) => {
   const user = event.data;
   //this is the stackoverflow solution
 //var user = firebase.auth().currentUser;
@@ -44,13 +44,13 @@ exports.addWelcomeMessages = functions.auth.user().onCreate((event) => {
   //   //photoUrl: '/assets/images/firebase-logo.png', // Firebase logo
   //   //text: `${fullName} signed in for the first time! Welcome!`
   // });
-});
+});*/
 
 exports.createFullCalendar = functions.database
     .ref('workers/{worker_id}/workInts')
     .onWrite(event => {
       if (event.data.previous.val() == null) {//this might change if I  allow the admin to remove all shits
-        console.log("There were no shifts set before for this worker");
+        //console.log("There were no shifts set before for this worker");
         var onlyadded = event.data.val();//newly added days
         
         
@@ -85,13 +85,13 @@ exports.createFullCalendar = functions.database
       var previous =event.data.previous.val();
       var current = event.data.val();
       var addedShifts = getAddedElements(previous,current);
-      console.log("This is previous " + previous);
-      console.log("This is current "+current);
+      //console.log("This is previous " + previous);
+      //console.log("This is current "+current);
       var removed = getRemovedElements(previous,current);
       //var removed = getRemovedElements(event.data.previous.val(),event.data.val());
       //var added = getAddedElements(event.data.previous.val(),event.data.val());
-      console.log("These have been added " + addedShifts);//could be null
-      console.log("These have been removed " + removed);//this as well
+      //console.log("These have been added " + addedShifts);//could be null
+      //console.log("These have been removed " + removed);//this as well
     }
       
       //var removed = getRemovedElements(event.data.previous.val(),event.data.val());
@@ -104,15 +104,15 @@ exports.createFullCalendar = functions.database
 
       return admin.database().ref('generalCalendar').once('value').then(snap =>{
           var alltheDays = snap.val();//before a const was
-          console.log("alltheDays are: "+alltheDays);
+          //console.log("alltheDays are: "+alltheDays);
           alltheDays = removeThese(alltheDays,removed);//if not, what is returned is lost...
-          console.log("alltheDays after removeThese are: "+alltheDays);
+          //console.log("alltheDays after removeThese are: "+alltheDays);
           for (var key in addedShifts) {
                   if (alltheDays.hasOwnProperty(key)) {
                     alltheDays.push(addedShifts[key]);
                     }
                 }
-          console.log("After the for loop alltheDays is: "+alltheDays);
+          //console.log("After the for loop alltheDays is: "+alltheDays);
           //admin.database().ref('generalCalendar').set(alltheDays);
           admin.database().ref('generalCalendar').set(alltheDays);
           return; 
@@ -152,10 +152,10 @@ function removeThese(all, deleted) {
   for (var i = all.length-1;i >=0;i--) {
     if (contains(deleted,all[i])) {
       allMinusDeleted.splice(i,1);
-      console.log("allMinusDelete inside the loop: "+allMinusDeleted);
+      //console.log("allMinusDelete inside the loop: "+allMinusDeleted);
     }
   }
-  console.log("allMinusDelete is: "+allMinusDeleted);
+  //console.log("allMinusDelete is: "+allMinusDeleted);
   return allMinusDeleted;
 }
 
